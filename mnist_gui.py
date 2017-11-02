@@ -107,8 +107,8 @@ class ScribbleArea(QWidget):
         self.setAttribute(Qt.WA_StaticContents)
         self.modified = False
         self.scribbling = False
-        self.myPenWidth = 1
-        self.myPenColor = Qt.blue
+        self.myPenWidth = 40
+        self.myPenColor = Qt.black
         self.image = QImage()
         self.lastPoint = QPoint()
 
