@@ -134,27 +134,7 @@ class ScribbleArea(QWidget):
 
 
     def showImage(self):
-        print(self.image.height())
-        print(self.image.width())
-        print("abc")
-        self.resizeImage(self.image, self.size())
-        scaledImage = self.image.smoothScaled(28, 28)
-        height = scaledImage.height()
-        width = scaledImage.width()
-        imageArray = np.zeros((height, width))
-        for y in range(height):
-            for x in range(width):
-                imageArray[y][x] = 255 - scaledImage.pixelColor(x, y).lightness()
-        print(self.image.pixelColor(0, 0).lightness())
-        print(256 * 256 * 256 * 256 - 1)
-        plt.imshow(imageArray)
-        #plt.show()
-        plt.pause(.01)
-        imageArray = imageArray.reshape((1, 28, 28, 1))
-        y_ = model.predict(imageArray)
-        y_ = y_.reshape(10)
-        for i in range(10):
-            print("{}: {:.4f}".format(i, y_[i]))
+        self.showacc()
 
     def openImage(self, fileName):
         loadedImage = QImage()
