@@ -212,9 +212,10 @@ class MainWindow(QMainWindow):
         layout = QHBoxLayout()
         self.scribbleArea = ScribbleArea()
         self.setCentralWidget(self.scribbleArea)
-        self.btn1 = QPushButton("Button01", self)
+        self.reset_btn = QPushButton("リセット", self)
+        self.reset_btn.clicked.connect(self.reset_screen)
         layout.addWidget(self.scribbleArea)
-        layout.addWidget(self.btn1)
+        layout.addWidget(self.reset_btn)
         self.setLayout(layout)
 
         self.createActions()
@@ -223,11 +224,15 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("MNIST GUI")
         self.resize(700, 500)
 
+    def reset_screen(self, event):
+        self.scribbleArea.clearImage()
+        
+
     def resizeEvent(self, event):
         self.scribbleArea.move(self.width() * 0.2, self.height() * 0.1)
         self.scribbleArea.resize(self.height() * 0.7, self.height() * 0.7)
 
-        self.btn1.move(self.width() * 0.01, self.height() * 0.5)
+        self.reset_btn.move(self.width() * 0.01, self.height() * 0.5)
 
     def closeEvent(self, event):
         if self.exitWarn():
