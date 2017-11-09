@@ -99,7 +99,7 @@ except:
 
 
 class ScribbleArea(QWidget):
-    def __init__(self, parent=None):
+    def __init__(self, text_output, parent=None):
         super(ScribbleArea, self).__init__(parent)
 
         self.setAttribute(Qt.WA_StaticContents)
@@ -109,6 +109,7 @@ class ScribbleArea(QWidget):
         self.myPenColor = Qt.black
         self.image = QImage()
         self.lastPoint = QPoint()
+        self.textOutput = text_output
 
     def showacc(self):
         self.resizeImage(self.image, self.size())
@@ -127,8 +128,10 @@ class ScribbleArea(QWidget):
         imageArray = imageArray.reshape((1, 28, 28, 1))
         y_ = model.predict(imageArray)
         y_ = y_.reshape(10)
+        self.textOutput.clear()
         for i in range(10):
             print("{}: {:.4f}".format(i, y_[i]))
+            self.textOutput.append("{}: {:.4f}\n".format(i, y_[i]))
 
 
     def showImage(self):
@@ -217,7 +220,9 @@ class MainWindow(QMainWindow):
         self.setStyleSheet(appStyle)
 
         layout = QHBoxLayout()
-        self.scribbleArea = ScribbleArea()
+        self.text = QTextBrowser(self)
+        self.text.append("hogehoge")
+        self.scribbleArea = ScribbleArea(self.text)
         self.setCentralWidget(self.scribbleArea)
         self.reset_btn = QPushButton("リセット", self)
         self.reset_btn.clicked.connect(self.reset_screen)
@@ -240,6 +245,9 @@ class MainWindow(QMainWindow):
         self.scribbleArea.resize(self.height() * 0.7, self.height() * 0.7)
 
         self.reset_btn.move(self.width() * 0.01, self.height() * 0.5)
+
+        self.text.move(self.width() * 0.75, self.height() * 0.1)
+        self.text.resize(self.width() * 0.2, self.height() * 0.8)
 
     def closeEvent(self, event):
         if self.exitWarn():
