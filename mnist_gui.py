@@ -1,5 +1,5 @@
 from PyQt5.QtCore import QDir, QPoint, QRect, QSize, Qt
-from PyQt5.QtGui import QImage, QPainter, QPen, qRgb
+from PyQt5.QtGui import QImage, QPainter, QPen, qRgb, QBrush
 from PyQt5.QtWidgets import *
 import numpy as np
 import matplotlib.pyplot as plt
@@ -98,8 +98,32 @@ except:
     model.save('./model.hdf5')
 
 
+class BarGraph(QWidget):
+    def __init__(self, parent=None):
+        super(BarGraph, self).__init__(parent)
+        self.values = np.zeros(10)
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.setBackgroundMode(Qt.OpaqueMode)
+        painter.setBackground(Qt.white)
+        dirty_rect = event.rect()
+        painter.setBrush(Qt.white)
+        painter.drawRect(dirty_rect)
+        painter.setPen(Qt.red)
+        painter.setBrush(QBrush(Qt.darkBlue))
+        for i, v in enumerate(self.values):
+            painter.drawRect(15, 40 * i + 20, 100 * v, 5)
+            painter.drawText(5, 40 * i + 25, "{}".format(i))
+            painter.drawText(120, 40 * i + 25, "{:.4f}".format(v))
+
+    def setValues(self, values):
+        self.values = values
+        self.update()
+
+
 class ScribbleArea(QWidget):
-    def __init__(self, text_output, parent=None):
+    def __init__(self, bar_output, parent=None):
         super(ScribbleArea, self).__init__(parent)
 
         self.setAttribute(Qt.WA_StaticContents)
@@ -109,7 +133,7 @@ class ScribbleArea(QWidget):
         self.myPenColor = Qt.black
         self.image = QImage()
         self.lastPoint = QPoint()
-        self.textOutput = text_output
+        self.barOutput = bar_output
 
     def showacc(self):
         self.resizeImage(self.image, self.size())
@@ -128,11 +152,9 @@ class ScribbleArea(QWidget):
         imageArray = imageArray.reshape((1, 28, 28, 1))
         y_ = model.predict(imageArray)
         y_ = y_.reshape(10)
-        self.textOutput.clear()
+        self.barOutput.setValues(y_)
         for i in range(10):
             print("{}: {:.4f}".format(i, y_[i]))
-            self.textOutput.append("{}: {:.4f}\n".format(i, y_[i]))
-
 
     def showImage(self):
         self.showacc()
@@ -207,11 +229,13 @@ class ScribbleArea(QWidget):
     def penWidth(self):
         return self.myPenWidth
 
-appStyle="""
+
+appStyle = """
 QMainWindow{
 background-color: #333333;
 }
 """
+
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -220,14 +244,14 @@ class MainWindow(QMainWindow):
         self.setStyleSheet(appStyle)
 
         layout = QHBoxLayout()
-        self.text = QTextBrowser(self)
-        self.text.append("hogehoge")
-        self.scribbleArea = ScribbleArea(self.text)
+        self.barGraph = BarGraph(self)
+        self.scribbleArea = ScribbleArea(self.barGraph)
         self.setCentralWidget(self.scribbleArea)
         self.reset_btn = QPushButton("リセット", self)
         self.reset_btn.clicked.connect(self.reset_screen)
-        layout.addWidget(self.scribbleArea)
         layout.addWidget(self.reset_btn)
+        layout.addWidget(self.scribbleArea)
+        layout.addWidget(self.barGraph)
         self.setLayout(layout)
 
         self.createActions()
@@ -238,7 +262,6 @@ class MainWindow(QMainWindow):
 
     def reset_screen(self, event):
         self.scribbleArea.clearImage()
-        
 
     def resizeEvent(self, event):
         self.scribbleArea.move(self.width() * 0.2, self.height() * 0.1)
@@ -246,8 +269,8 @@ class MainWindow(QMainWindow):
 
         self.reset_btn.move(self.width() * 0.01, self.height() * 0.5)
 
-        self.text.move(self.width() * 0.75, self.height() * 0.1)
-        self.text.resize(self.width() * 0.2, self.height() * 0.8)
+        self.barGraph.move(self.width() * 0.75, self.height() * 0.1)
+        self.barGraph.resize(self.width() * 0.2, self.height() * 0.8)
 
     def closeEvent(self, event):
         if self.exitWarn():
