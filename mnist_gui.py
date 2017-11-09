@@ -1,8 +1,6 @@
 from PyQt5.QtCore import QDir, QPoint, QRect, QSize, Qt
-from PyQt5.QtGui import QImage, QImageWriter, QPainter, QPen, qRgb
-from PyQt5.QtWidgets import (QAction, QApplication, QColorDialog, QFileDialog,
-                             QInputDialog, QMainWindow, QMenu, QMessageBox, QWidget)
-from PyQt5.QtPrintSupport import QPrintDialog, QPrinter
+from PyQt5.QtGui import QImage, QPainter, QPen, qRgb
+from PyQt5.QtWidgets import *
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -211,16 +209,25 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super(MainWindow, self).__init__()
 
-        self.saveAsActs = []
-
+        layout = QHBoxLayout()
         self.scribbleArea = ScribbleArea()
         self.setCentralWidget(self.scribbleArea)
+        self.btn1 = QPushButton("Button01", self)
+        layout.addWidget(self.scribbleArea)
+        layout.addWidget(self.btn1)
+        self.setLayout(layout)
 
         self.createActions()
         self.createMenus()
 
         self.setWindowTitle("MNIST GUI")
-        self.resize(500, 500)
+        self.resize(700, 500)
+
+    def resizeEvent(self, event):
+        self.scribbleArea.move(self.width() * 0.2, self.height() * 0.1)
+        self.scribbleArea.resize(self.height() * 0.7, self.height() * 0.7)
+
+        self.btn1.move(self.width() * 0.01, self.height() * 0.5)
 
     def closeEvent(self, event):
         if self.exitWarn():
