@@ -204,10 +204,17 @@ class ScribbleArea(QWidget):
     def penWidth(self):
         return self.myPenWidth
 
+appStyle="""
+QMainWindow{
+background-color: #333333;
+}
+"""
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super(MainWindow, self).__init__()
+
+        self.setStyleSheet(appStyle)
 
         layout = QHBoxLayout()
         self.scribbleArea = ScribbleArea()
