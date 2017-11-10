@@ -13,89 +13,67 @@ from keras.models import load_model
 from sklearn import datasets
 from sklearn.model_selection import train_test_split
 
-try:
-    if True:
-        model = load_model('./model.hdf5')
-        model.summary()
-    else:
-        raise 'hoge'
-except:
-    '''
-    データの生成
-    '''
-    mnist = datasets.fetch_mldata('MNIST original', data_home='.')
 
-    n = len(mnist.data)
-    N = n #10000  # MNISTの一部を使う
-    indices = np.random.permutation(range(n))[:N]  # ランダムにN枚を選択
+class MnistModel:
+    def __init__(self, logger):
+        self.logger = logger
+        self.mnist = datasets.fetch_mldata('MNIST original', data_home='.')
+        self.shuffle()
+        self.model = None
 
-    X = mnist.data[indices]
-    X = X.reshape(-1, 28, 28, 1)
-    y = mnist.target[indices]
-    Y = np.eye(10)[y.astype(int)]  # 1-of-K 表現に変換
+    def shuffle(self):
+        n = len(self.mnist.data)
+        indices = np.random.permutation(range(n))[:n]
 
-    X_train, X_test, Y_train, Y_test = train_test_split(X, Y, train_size=0.8)
+        x = self.mnist.data[indices]
+        x = x.reshape(-1, 28, 28, 1)
+        y = self.mnist.target[indices]
+        y = np.eye(10)[y.astype(int)]  # 1-of-K 表現に変換
 
-    if False:
-        toshow = X_test.reshape(-1, 28, 28)
-        for i in range(100):
-            for j in range(10):
-                print("{}: {:.4f}".format(j, Y_test[i][j]))
-            plt.imshow(toshow[i])
-            plt.show()
+        self.X_train, self.X_test, self.Y_train, self.Y_test\
+            = train_test_split(x, y, train_size=0.8)
 
-    '''
-    モデル設定
-    '''
-    n_in = len(X[0])  # 784
-    n_hidden = 200
-    # n_hidden = 4000
-    n_out = len(Y[0])  # 10
+    def load(self, s):
+        self.model = load_model(s)
 
-    model = Sequential()
+    def learn(self, epochs, batch_size):
+        if self.model is None:
+            self.logger.append("no model")
+            return
+        self.model.fit(self.X_train, self.Y_train, epochs=epochs, batch_size=batch_size)
 
-    model.add(Convolution2D(15,
-                            (3, 3),
-                            input_shape=(28, 28, 1),
-                            activation='relu'))
-    model.add(MaxPooling2D())
-    model.add(Convolution2D(15,
-                            (3, 3),
-                            activation='relu'))
-    model.add(MaxPooling2D())
-    model.add(Flatten())
+    def predict(self, image):
+        if self.model is None:
+            return
+        return self.model.predict(image).reshape(10)
 
-    model.add(BatchNormalization())
+    def set_model(self):
+        self.model = Sequential()
 
-    model.add(Dense(n_hidden))
+        self.model.add(Convolution2D(15,
+                                     (3, 3),
+                                     input_shape=(28, 28, 1),
+                                     activation='relu'))
+        self.model.add(MaxPooling2D())
+        self.model.add(Convolution2D(15,
+                                     (3, 3),
+                                     activation='relu'))
+        self.model.add(MaxPooling2D())
+        self.model.add(Flatten())
 
+        self.model.add(BatchNormalization())
 
+        self.model.add(Dense(200))
 
-    model.add(Dropout(0.5))
+        self.model.add(Dropout(0.5))
 
-    model.add(Dense(n_out))
-    model.add(Activation('softmax'))
+        self.model.add(Dense(10))
+        self.model.add(Activation('softmax'))
 
-    model.compile(loss='categorical_crossentropy',
-                  optimizer=Adam(lr=0.01),
-                  metrics=['accuracy'])
-    model.summary()
-
-    '''
-    モデル学習
-    '''
-    epochs = 10
-    batch_size = 200
-
-    model.fit(X_train, Y_train, epochs=epochs, batch_size=batch_size)
-
-    '''
-    予測精度の評価
-    '''
-    loss_and_metrics = model.evaluate(X_test, Y_test)
-    print(loss_and_metrics)
-
-    model.save('./model.hdf5')
+        self.model.compile(loss='categorical_crossentropy',
+                           optimizer=Adam(lr=0.01),
+                           metrics=['accuracy'])
+        self.model.summary()
 
 
 class BarGraph(QWidget):
@@ -123,7 +101,7 @@ class BarGraph(QWidget):
 
 
 class ScribbleArea(QWidget):
-    def __init__(self, bar_output, parent=None):
+    def __init__(self, bar_output, model, parent=None):
         super(ScribbleArea, self).__init__(parent)
 
         self.setAttribute(Qt.WA_StaticContents)
@@ -134,6 +112,7 @@ class ScribbleArea(QWidget):
         self.image = QImage()
         self.lastPoint = QPoint()
         self.barOutput = bar_output
+        self.model = model
 
     def showacc(self):
         self.resizeImage(self.image, self.size())
@@ -150,8 +129,7 @@ class ScribbleArea(QWidget):
         #plt.show()
         #plt.pause(.01)
         imageArray = imageArray.reshape((1, 28, 28, 1))
-        y_ = model.predict(imageArray)
-        y_ = y_.reshape(10)
+        y_ = self.model.predict(imageArray)
         self.barOutput.setValues(y_)
         for i in range(10):
             print("{}: {:.4f}".format(i, y_[i]))
@@ -245,11 +223,17 @@ class MainWindow(QMainWindow):
 
         layout = QHBoxLayout()
         self.barGraph = BarGraph(self)
-        self.scribbleArea = ScribbleArea(self.barGraph)
+        self.textArea = QTextBrowser(self)
+
+        self.model = MnistModel(self.textArea)
+        self.model.load('./model.hdf5')
+
+        self.scribbleArea = ScribbleArea(self.barGraph, self.model)
         self.setCentralWidget(self.scribbleArea)
         self.reset_btn = QPushButton("リセット", self)
         self.reset_btn.clicked.connect(self.reset_screen)
         layout.addWidget(self.reset_btn)
+        layout.addWidget(self.textArea)
         layout.addWidget(self.scribbleArea)
         layout.addWidget(self.barGraph)
         self.setLayout(layout)
@@ -260,6 +244,7 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("MNIST GUI")
         self.resize(700, 500)
 
+
     def reset_screen(self, event):
         self.scribbleArea.clearImage()
 
@@ -267,7 +252,10 @@ class MainWindow(QMainWindow):
         self.scribbleArea.move(self.width() * 0.2, self.height() * 0.1)
         self.scribbleArea.resize(self.height() * 0.7, self.height() * 0.7)
 
-        self.reset_btn.move(self.width() * 0.01, self.height() * 0.5)
+        self.reset_btn.move(self.width() * 0.01, self.height() * 0.2)
+
+        self.textArea.move(self.width() * 0.01, self.height() * 0.4)
+        self.textArea.resize(self.width() * 0.18, self.height() * 0.5)
 
         self.barGraph.move(self.width() * 0.75, self.height() * 0.1)
         self.barGraph.resize(self.width() * 0.2, self.height() * 0.8)
