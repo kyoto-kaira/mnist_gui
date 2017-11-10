@@ -1,21 +1,24 @@
 from PyQt5.QtCore import QDir, QPoint, QRect, QSize, Qt
-from PyQt5.QtGui import QImage, QPainter, QPen, qRgb, QBrush
+from PyQt5.QtGui import QImage, QPainter, QPen, qRgb, QBrush, QTextCursor
 from PyQt5.QtWidgets import *
 import numpy as np
 import matplotlib.pyplot as plt
 
+import threading
 from keras.models import Sequential
 from keras.layers.core import Dense, Activation, Flatten, Dropout
 from keras.layers.convolutional import Convolution2D, MaxPooling2D
 from keras.layers.normalization import BatchNormalization
 from keras.optimizers import SGD, Adam
 from keras.models import load_model
+from keras.callbacks import LambdaCallback
 from sklearn import datasets
 from sklearn.model_selection import train_test_split
 
 
-class MnistModel:
+class MnistModel(threading.Thread):
     def __init__(self, logger):
+        super(MnistModel, self).__init__()
         self.logger = logger
         self.mnist = datasets.fetch_mldata('MNIST original', data_home='.')
         self.shuffle()
@@ -36,11 +39,21 @@ class MnistModel:
     def load(self, s):
         self.model = load_model(s)
 
-    def learn(self, epochs, batch_size):
+    def run(self):
+        """学習を実行する。時間がかかるのでマルチスレッド化してある。"""
+        epochs = 1
+        batch_size = 100
         if self.model is None:
             self.logger.append("no model")
             return
-        self.model.fit(self.X_train, self.Y_train, epochs=epochs, batch_size=batch_size)
+        self.logger.append("start learn")
+        def out(epoch, logs):
+            self.logger.append(str(epoch))
+            self.logger.moveCursor(QTextCursor.End)
+        self.model.fit(self.X_train, self.Y_train,
+                       epochs=epochs,
+                       batch_size=batch_size,
+                       callbacks=[LambdaCallback(on_batch_begin=out)])
 
     def predict(self, image):
         if self.model is None:
@@ -232,7 +245,10 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(self.scribbleArea)
         self.reset_btn = QPushButton("リセット", self)
         self.reset_btn.clicked.connect(self.reset_screen)
+        self.learn_btn = QPushButton("学習開始", self)
+        self.learn_btn.clicked.connect(self.learn)
         layout.addWidget(self.reset_btn)
+        layout.addWidget(self.learn_btn)
         layout.addWidget(self.textArea)
         layout.addWidget(self.scribbleArea)
         layout.addWidget(self.barGraph)
@@ -244,15 +260,18 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("MNIST GUI")
         self.resize(700, 500)
 
-
     def reset_screen(self, event):
         self.scribbleArea.clearImage()
+
+    def learn(self, event):
+        self.model.start()
 
     def resizeEvent(self, event):
         self.scribbleArea.move(self.width() * 0.2, self.height() * 0.1)
         self.scribbleArea.resize(self.height() * 0.7, self.height() * 0.7)
 
         self.reset_btn.move(self.width() * 0.01, self.height() * 0.2)
+        self.learn_btn.move(self.width() * 0.01, self.height() * 0.3)
 
         self.textArea.move(self.width() * 0.01, self.height() * 0.4)
         self.textArea.resize(self.width() * 0.18, self.height() * 0.5)
