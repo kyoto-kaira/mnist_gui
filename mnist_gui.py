@@ -288,7 +288,7 @@ class HandWritingTab(QWidget):
 
         self.barGraph = BarGraph(self)
         self.scribbleArea = ScribbleArea(self.barGraph, model, parent=self)
-        self.reset_btn = QPushButton("リセット", self)
+        self.reset_btn = QPushButton("リセット (Space)", self)
         self.reset_btn.clicked.connect(self.reset_screen)
 
     def resizeEvent(self, event):
@@ -396,7 +396,7 @@ class MainWindow(QMainWindow):
         self.penWidthAct = QAction("Pen &Width...", self,
                                    triggered=self.penWidth)
 
-        self.clearScreenAct = QAction("&Clear Screen", self, shortcut="Ctrl+L",
+        self.clearScreenAct = QAction("&Clear Screen", self, shortcut="Space",
                                       triggered=self.HandWritingTab.scribbleArea.clearImage)
 
         self.aboutAct = QAction("&About", self, triggered=self.about)
