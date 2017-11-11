@@ -59,11 +59,17 @@ class MnistModel(threading.Thread):
         self.X_train, self.X_test, self.Y_train, self.Y_test\
             = train_test_split(x, y, train_size=0.8)
 
-    def load(self, s):
+    def load(self, path):
         if self._is_learning:
             raise RuntimeError("学習中なのでモデルのロードはできません。")
         else:
-            self.model = load_model(s)
+            self.model = load_model(path)
+
+    def save(self, path):
+        if self._is_learning:
+            raise RuntimeError("学習中なので、モデルはセーブできません。")
+        else:
+            self.model.save(path)
 
     def set_update_bar_func(self, update_bar_func):
         self.update_bar_func = update_bar_func
@@ -342,11 +348,14 @@ class ModelEditorTab(QWidget):
         self.load_defo_btn.clicked.connect(self.load_defo)
         self.evaluate_btn = QPushButton("モデルを評価", self)
         self.evaluate_btn.clicked.connect(self.evaluate_model)
+        self.save_btn = QPushButton("モデルを保存", self)
+        self.save_btn.clicked.connect(self.save_model)
 
     def resizeEvent(self, event):
         self.reset_model_btn.move(self.width() * 0.1, self.height() * 0.05)
         self.load_defo_btn.move(self.width() * 0.1, self.height() * 0.1)
         self.evaluate_btn.move(self.width() * 0.1, self.height() * 0.15)
+        self.save_btn.move(self.width() * 0.1, self.height() * 0.2)
 
     def reset_model(self):
         try:
@@ -362,6 +371,12 @@ class ModelEditorTab(QWidget):
 
     def evaluate_model(self):
         print(self.model.report_evaluation())
+
+    def save_model(self):
+        try:
+            self.model.model.save(default_model_path)
+        except RuntimeError as e:
+            print(e)
 
 
 class MainWindow(QMainWindow):
