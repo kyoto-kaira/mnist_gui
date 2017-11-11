@@ -121,8 +121,9 @@ class ModelCreator(object):
     となるようなモデルを構築する。
     '''
     def __init__(self):
-        self.shape=(28,28,1)
+        self.shape = (28, 28, 1)
         self.model_structure = []
+        self.add_initial()
         pass
 
     def _add_layer(self, layer):
@@ -146,6 +147,7 @@ class ModelCreator(object):
 
     def add_compile(self):
         self._add_layer(CompileLayer(self.shape))
+        self.get_model()
 
     def get_model(self):
         # todo エラー処理

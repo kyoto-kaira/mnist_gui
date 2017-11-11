@@ -13,7 +13,15 @@ class LayerEditorTab(QTabWidget):
         super(LayerEditorTab, self).__init__(parent)
         self.model_st = model_creator.ModelCreator()
         conv2d_editor = Conv2dEditor(self.model_st, self)
+        flatten_editor = FlattenEditor(self.model_st, self)
+        dense_editor = DenseEditor(self.model_st, self)
+        activation_editor = ActivationEditor(self.model_st, self)
+        compile_editor = CompileEditor(self.model_st, self)
         self.addTab(conv2d_editor, "畳み込み層")
+        self.addTab(flatten_editor, "一次元化層")
+        self.addTab(dense_editor, "全結合層")
+        self.addTab(activation_editor, "活性化関数")
+        self.addTab(compile_editor, "コンパイル")
 
 
 class ModelEditorWidget(QWidget):
