@@ -156,10 +156,11 @@ class BarGraph(QWidget):
         painter.drawRect(dirty_rect)
         painter.setPen(Qt.red)
         painter.setBrush(QBrush(Qt.darkBlue))
+        y_step = 20
         for i, v in enumerate(self.values):
-            painter.drawRect(15, 40 * i + 20, 100 * v, 5)
-            painter.drawText(5, 40 * i + 25, "{}".format(i))
-            painter.drawText(120, 40 * i + 25, "{:.4f}".format(v))
+            painter.drawRect(15, y_step * i + 20, 100 * v, 5)
+            painter.drawText(5, y_step * i + 25, "{}".format(i))
+            painter.drawText(120, y_step * i + 25, "{:.4f}".format(v))
 
     def setValues(self, values):
         self.values = values
@@ -297,7 +298,7 @@ class HandWritingTab(QWidget):
         self.scribbleArea.resize(self.width() * 0.7, self.width() * 0.7)
 
         self.barGraph.move(self.width() * 0.75, self.height() * 0.1)
-        self.barGraph.resize(self.width() * 0.2, self.height() * 0.8)
+        self.barGraph.resize(200, 220)
 
     def reset_screen(self, event):
         self.scribbleArea.clearImage()
