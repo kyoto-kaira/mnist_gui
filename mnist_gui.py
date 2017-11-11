@@ -21,8 +21,16 @@ class MnistModel(threading.Thread):
         super(MnistModel, self).__init__()
         self.logger = logger
         self.mnist = datasets.fetch_mldata('MNIST original', data_home='.')
-        self.shuffle()
+        self.X_train = None
+        self.Y_train = None
+        self.X_test = None
+        self.Y_test = None
         self.model = None
+        self.shuffle()
+
+        self.learn_event = threading.Event()
+        self.learn_event.clear()
+        self._exit = False
 
     def shuffle(self):
         n = len(self.mnist.data)
@@ -41,19 +49,42 @@ class MnistModel(threading.Thread):
 
     def run(self):
         """学習を実行する。時間がかかるのでマルチスレッド化してある。"""
-        epochs = 1
-        batch_size = 100
+        while True:
+            self.learn_event.wait()
+            if self._exit:
+                break
+            epochs = 1
+            batch_size = 1000
+            if self.model is None:
+                self.logger.append("no model")
+                return
+            self.logger.append("start learn")
+
+            def out(epoch, logs):
+                self.logger.append(str(epoch))
+                self.logger.append(str(logs))
+                self.logger.moveCursor(QTextCursor.End)
+
+            self.model.fit(self.X_train, self.Y_train,
+                           epochs=epochs,
+                           batch_size=batch_size,
+                           callbacks=[LambdaCallback(on_batch_end=out)])
+
+            if self._exit:
+                break
+            self.learn_event.clear()
+            if self._exit:
+                break
+
+    def stop_learning(self):
+        self.model.stop_training = True
+
+    def kill(self):
         if self.model is None:
-            self.logger.append("no model")
             return
-        self.logger.append("start learn")
-        def out(epoch, logs):
-            self.logger.append(str(epoch))
-            self.logger.moveCursor(QTextCursor.End)
-        self.model.fit(self.X_train, self.Y_train,
-                       epochs=epochs,
-                       batch_size=batch_size,
-                       callbacks=[LambdaCallback(on_batch_begin=out)])
+        self.model.stop_training = True
+        self._exit = True
+        self.learn_event.set()
 
     def predict(self, image):
         if self.model is None:
@@ -247,8 +278,11 @@ class MainWindow(QMainWindow):
         self.reset_btn.clicked.connect(self.reset_screen)
         self.learn_btn = QPushButton("学習開始", self)
         self.learn_btn.clicked.connect(self.learn)
+        self.stop_btn = QPushButton("学習中止", self)
+        self.stop_btn.clicked.connect(self.stop_learning)
         layout.addWidget(self.reset_btn)
         layout.addWidget(self.learn_btn)
+        layout.addWidget(self.stop_btn)
         layout.addWidget(self.textArea)
         layout.addWidget(self.scribbleArea)
         layout.addWidget(self.barGraph)
@@ -260,11 +294,16 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("MNIST GUI")
         self.resize(700, 500)
 
+        self.model.start()
+
     def reset_screen(self, event):
         self.scribbleArea.clearImage()
 
     def learn(self, event):
-        self.model.start()
+        self.model.learn_event.set()
+
+    def stop_learning(self, event):
+        self.model.stop_learning()
 
     def resizeEvent(self, event):
         self.scribbleArea.move(self.width() * 0.2, self.height() * 0.1)
@@ -272,6 +311,7 @@ class MainWindow(QMainWindow):
 
         self.reset_btn.move(self.width() * 0.01, self.height() * 0.2)
         self.learn_btn.move(self.width() * 0.01, self.height() * 0.3)
+        self.stop_btn.move(self.width() * 0.01, self.height() * 0.35)
 
         self.textArea.move(self.width() * 0.01, self.height() * 0.4)
         self.textArea.resize(self.width() * 0.18, self.height() * 0.5)
@@ -281,6 +321,7 @@ class MainWindow(QMainWindow):
 
     def closeEvent(self, event):
         if self.exitWarn():
+            self.model.kill()
             event.accept()
         else:
             event.ignore()
@@ -363,7 +404,7 @@ class MainWindow(QMainWindow):
 
         if fileName:
             print("dummy saveFile")
-            return True;
+            return True
 
         return False
 
