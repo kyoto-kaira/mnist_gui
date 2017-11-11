@@ -148,20 +148,10 @@ class ModelStructure(object):
         self._add_layer(CompileLayer(self.shape))
 
     def get_model(self):
-        self.add_initial()
-        self.add_conv2d(10, 4, 3)
-        self.add_activation('relu')
-        self.add_flatten()
-        self.add_dense(10)
-        self.add_compile()
-        str = ""
+        # todo エラー処理
+        code = ""
         for layer in self.model_structure:
-            str += layer.get_code()
-        print(str)
-        return str
-
-
-m = ModelStructure()
-code = m.get_model()
-exec(code)
-model.summary()
+            code += layer.get_code()
+        print(code)
+        # exec(code)
+        # return model

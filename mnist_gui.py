@@ -19,6 +19,7 @@ from sklearn import datasets
 from sklearn.model_selection import train_test_split
 
 from layer_editor_widgets import *
+from model_structure import ModelStructure
 
 default_model_path = './model.hdf5'
 
@@ -344,7 +345,8 @@ class HandWritingWidget(QWidget):
 class LayerEditorTab(QTabWidget):
     def __init__(self, parent=None):
         super(LayerEditorTab, self).__init__(parent)
-        conv2d_editor = Conv2dEditor(self)
+        self.model_st = ModelStructure()
+        conv2d_editor = Conv2dEditor(self.model_st, self)
         self.addTab(conv2d_editor, "畳み込み層")
 
 
