@@ -1,0 +1,174 @@
+from PyQt5.QtGui import QTextCursor
+
+import numpy as np
+import threading
+import tensorflow as tf
+
+from keras.models import Sequential
+from keras.layers.core import Dense, Activation, Flatten, Dropout
+from keras.layers.convolutional import Convolution2D, MaxPooling2D
+from keras.layers.normalization import BatchNormalization
+from keras.optimizers import SGD, Adam
+from keras.models import load_model
+from keras.callbacks import LambdaCallback
+
+import sklearn.metrics
+from sklearn import datasets
+from sklearn.model_selection import train_test_split
+
+default_model_path = './model.hdf5'
+
+
+class MnistModel(threading.Thread):
+    def __init__(self, logger, progress):
+        super(MnistModel, self).__init__()
+        self.logger = logger
+        self.progress = progress
+
+        self.learn_event = threading.Event()
+        self.learn_event.clear()
+        self._exit = False
+        self._is_learning = False
+
+        self.mnist = datasets.fetch_mldata('MNIST original', data_home='.')
+        self.X_train = None
+        self.Y_train = None
+        self.X_test = None
+        self.Y_test = None
+        self._set_train_and_test_data()
+
+        self.model = None
+        try:
+            self.load(default_model_path)
+        except:
+            self.set_model()
+        self.graph = tf.get_default_graph()
+
+        self.update_bar_func = None
+
+    def _set_train_and_test_data(self):
+        np.random.seed(0)
+        n = len(self.mnist.data)
+        indices = np.random.permutation(range(n))[:n]
+
+        x = self.mnist.data[indices]
+        x = x.reshape(-1, 28, 28, 1)
+        y = self.mnist.target[indices]
+        y = np.eye(10)[y.astype(int)]  # 1-of-K 表現に変換
+
+        self.X_train, self.X_test, self.Y_train, self.Y_test \
+            = train_test_split(x, y, test_size=0.2)
+
+    def load(self, path):
+        if self._is_learning:
+            raise RuntimeError("学習中なのでモデルのロードはできません。")
+        else:
+            self.model = load_model(path)
+
+    def save(self, path):
+        if self._is_learning:
+            raise RuntimeError("学習中なので、モデルはセーブできません。")
+        else:
+            self.model.save(path)
+
+    def set_update_bar_func(self, update_bar_func):
+        self.update_bar_func = update_bar_func
+
+    def run(self):
+        """学習を実行する。時間がかかるのでマルチスレッド化してある。"""
+        while True:
+            self.learn_event.wait()
+            if self._exit:
+                break
+            self._is_learning = True
+            epochs = 1
+            batch_size = 1000
+            num_batch = len(self.X_train) // batch_size
+            if self.model is None:
+                self.logger.append("no model")
+                return
+
+            # self.progress.setValue(0)
+            self.logger.append("start learning")
+
+            def batch_end_out(epoch, logs):
+                # self.progress.setValue((epoch + 1) / num_batch * 100)
+                self.logger.append(str("{}/{} {:.4f}".format(epoch + 1,
+                                                             num_batch,
+                                                             logs['acc'])))
+                self.logger.moveCursor(QTextCursor.End)
+                if self.update_bar_func is not None:
+                    self.update_bar_func()
+
+            def epoch_end_out(epoch, logs):
+                self.logger.append(str(logs))
+                self.logger.moveCursor(QTextCursor.End)
+
+            with self.graph.as_default():
+                self.model.fit(self.X_train, self.Y_train,
+                               validation_data=(self.X_test, self.Y_test),
+                               epochs=epochs,
+                               batch_size=batch_size,
+                               callbacks=[LambdaCallback(on_batch_end=batch_end_out,
+                                                         on_epoch_end=epoch_end_out)])
+
+            self._is_learning = False
+            if self._exit:
+                break
+            self.learn_event.clear()
+            if self._exit:
+                break
+
+    def stop_learning(self):
+        self.model.stop_training = True
+
+    def kill(self):
+        if self.model is None:
+            return
+        self.model.stop_training = True
+        self._exit = True
+        self.learn_event.set()
+
+    def predict(self, image):
+        if self.model is None:
+            return
+        return self.model.predict(image).reshape(10)
+
+    def set_model(self):
+        if self._is_learning:
+            raise RuntimeError("学習中なので、モデルの設定はできません。")
+
+        self.model = Sequential()
+
+        self.model.add(Convolution2D(15,
+                                     (3, 3),
+                                     input_shape=(28, 28, 1),
+                                     activation='relu'))
+        self.model.add(MaxPooling2D())
+        self.model.add(Convolution2D(15,
+                                     (3, 3),
+                                     activation='relu'))
+        self.model.add(MaxPooling2D())
+        self.model.add(Flatten())
+
+        self.model.add(BatchNormalization())
+
+        self.model.add(Dense(200))
+
+        self.model.add(Dropout(0.5))
+
+        self.model.add(Dense(10))
+        self.model.add(Activation('softmax'))
+
+        self.model.compile(loss='categorical_crossentropy',
+                           optimizer=Adam(lr=0.01),
+                           metrics=['accuracy'])
+        self.model.summary()
+
+    def report_evaluation(self):
+        y = self.model.predict(self.X_test)
+        y_pred = [np.argmax(onehot) for onehot in y]
+        y_true = [np.argmax(onehot) for onehot in self.Y_test]
+        # return sklearn.metrics.classification_report(y_true, y_pred)
+        return float(sklearn.metrics.f1_score(y_true, y_pred, average='weighted'))
+

@@ -111,7 +111,7 @@ class CompileLayer(LayerBase):
         return " model.compile(loss='categorical_crossentropy', optimizer='SGD', metrics=['acc']);"
 
 
-class ModelStructure(object):
+class ModelCreator(object):
     '''
     MNIST で使うモデルをリストや辞書を使って表現する。
     モデルの編集を関数として提供する。
