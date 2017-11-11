@@ -24,6 +24,11 @@ class MnistModel(threading.Thread):
         self.logger = logger
         self.progress = progress
 
+        self.learn_event = threading.Event()
+        self.learn_event.clear()
+        self._exit = False
+        self._is_learning = False
+
         self.mnist = datasets.fetch_mldata('MNIST original', data_home='.')
         self.X_train = None
         self.Y_train = None
@@ -37,10 +42,6 @@ class MnistModel(threading.Thread):
         except:
             self.set_model()
         self.graph = tf.get_default_graph()
-
-        self.learn_event = threading.Event()
-        self.learn_event.clear()
-        self._exit = False
 
     def _set_train_and_test_data(self):
         np.random.seed(0)
@@ -56,7 +57,10 @@ class MnistModel(threading.Thread):
             = train_test_split(x, y, train_size=0.8)
 
     def load(self, s):
-        self.model = load_model(s)
+        if self._is_learning:
+            raise RuntimeError("学習中なのでモデルのロードはできません。")
+        else:
+            self.model = load_model(s)
 
     def run(self):
         """学習を実行する。時間がかかるのでマルチスレッド化してある。"""
@@ -64,6 +68,7 @@ class MnistModel(threading.Thread):
             self.learn_event.wait()
             if self._exit:
                 break
+            self._is_learning = True
             epochs = 1
             batch_size = 1000
             num_batch = len(self.X_train) // batch_size
@@ -71,11 +76,11 @@ class MnistModel(threading.Thread):
                 self.logger.append("no model")
                 return
 
-            self.progress.setValue(0)
+            # self.progress.setValue(0)
             self.logger.append("start learning")
 
             def batch_end_out(epoch, logs):
-                self.progress.setValue((epoch + 1) / num_batch * 100)
+                # self.progress.setValue((epoch + 1) / num_batch * 100)
                 self.logger.append(str("{}/{} {:.4f}".format(epoch + 1,
                                                              num_batch,
                                                              logs['acc'])))
@@ -93,6 +98,7 @@ class MnistModel(threading.Thread):
                                callbacks=[LambdaCallback(on_batch_end=batch_end_out,
                                                          on_epoch_end=epoch_end_out)])
 
+            self._is_learning = False
             if self._exit:
                 break
             self.learn_event.clear()
@@ -115,6 +121,9 @@ class MnistModel(threading.Thread):
         return self.model.predict(image).reshape(10)
 
     def set_model(self):
+        if self._is_learning:
+            raise RuntimeError("学習中なので、モデルの設定はできません。")
+
         self.model = Sequential()
 
         self.model.add(Convolution2D(15,
@@ -322,10 +331,16 @@ class ModelEditorTab(QWidget):
         self.load_defo_btn.move(self.width() * 0.1, self.height() * 0.1)
 
     def reset_model(self):
-        self.model.set_model()
+        try:
+            self.model.set_model()
+        except RuntimeError as e:
+            print(e)
 
     def load_defo(self):
-        self.model.load(default_model_path)
+        try:
+            self.model.load(default_model_path)
+        except RuntimeError as e:
+            print(e)
 
 
 class MainWindow(QMainWindow):
