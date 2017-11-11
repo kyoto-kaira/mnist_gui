@@ -102,6 +102,8 @@ class InitialLayer(LayerBase):
 
 class CompileLayer(LayerBase):
     def __init__(self, input_shape):
+        if (len(input_shape) is not 1) or (input_shape[0] is not 10):
+            raise RuntimeError("最終層は、(10,)の形である必要があります。")
         self.input_shape = input_shape
         self.output_shape = input_shape
 
@@ -147,10 +149,10 @@ class ModelStructure(object):
 
     def get_model(self):
         self.add_initial()
-        self.add_conv2d(10, 3, 3)
+        self.add_conv2d(10, 4, 3)
         self.add_activation('relu')
         self.add_flatten()
-        self.add_dense(100)
+        self.add_dense(10)
         self.add_compile()
         str = ""
         for layer in self.model_structure:
