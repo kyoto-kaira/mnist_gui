@@ -191,28 +191,28 @@ class ScribbleArea(QWidget):
         self.barOutput = bar_output
         self.model = model
 
-    def showacc(self):
+    def getProcessedImage(self):
         self.resizeImage(self.image, self.size())
-        scaledImage = self.image.smoothScaled(28, 28)
-        height = scaledImage.height()
-        width = scaledImage.width()
-        imageArray = np.zeros((height, width))
+        scaled_image = self.image.smoothScaled(28, 28)
+        height = scaled_image.height()
+        width = scaled_image.width()
+        image_array = np.zeros((height, width))
         for y in range(height):
             for x in range(width):
-                imageArray[y][x] = 255 - scaledImage.pixelColor(x, y).lightness()
-        #print(self.image.pixelColor(0, 0).lightness())
-        #print(256 * 256 * 256 * 256 - 1)
-        #plt.imshow(imageArray)
-        #plt.show()
-        #plt.pause(.01)
-        imageArray = imageArray.reshape((1, 28, 28, 1))
-        y_ = self.model.predict(imageArray)
-        self.barOutput.setValues(y_)
-        for i in range(10):
-            print("{}: {:.4f}".format(i, y_[i]))
+                image_array[y][x] = 255 - scaled_image.pixelColor(x, y).lightness()
+        return image_array.reshape((1, 28, 28, 1))
+
+    def outputAcc(self):
+        image_array = self.getProcessedImage()
+        y = self.model.predict(image_array)
+        self.barOutput.setValues(y)
+        # for i in range(10):
+        #     print("{}: {:.4f}".format(i, y[i]))
 
     def showImage(self):
-        self.showacc()
+        image_array = self.getProcessedImage().reshape(28, 28)
+        plt.imshow(image_array, cmap='gray', vmin=0, vmax=255)
+        plt.pause(0.01)
 
     def setPenColor(self, newColor):
         self.myPenColor = newColor
@@ -243,7 +243,7 @@ class ScribbleArea(QWidget):
         painter = QPainter(self)
         dirtyRect = event.rect()
         painter.drawImage(dirtyRect, self.image, dirtyRect)
-        self.showacc()
+        self.outputAcc()
 
     def resizeEvent(self, event):
         if self.width() > self.image.width() or self.height() > self.image.height():
