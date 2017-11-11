@@ -300,6 +300,9 @@ class HandWritingTab(QWidget):
         self.barGraph.move(self.width() * 0.75, self.height() * 0.1)
         self.barGraph.resize(200, 220)
 
+        # 描画スペースのサイズに合わせて、ペンのサイズを自動設定
+        self.scribbleArea.setPenWidth(self.width() * 0.7 / 7)
+
     def reset_screen(self, event):
         self.scribbleArea.clearImage()
 
