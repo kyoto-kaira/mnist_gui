@@ -1,5 +1,6 @@
 from PyQt5.QtCore import QDir, QPoint, QRect, QSize, Qt
-from PyQt5.QtGui import QImage, QPainter, QPen, qRgb, QBrush, QTextCursor
+from PyQt5.QtGui import QImage, QPainter, QPen, qRgb, QBrush,\
+    QTextCursor, QPalette
 from PyQt5.QtWidgets import *
 import numpy as np
 import matplotlib.pyplot as plt
@@ -16,6 +17,8 @@ from keras.callbacks import LambdaCallback
 import sklearn.metrics
 from sklearn import datasets
 from sklearn.model_selection import train_test_split
+
+from layer_editor_widgets import *
 
 default_model_path = './model.hdf5'
 
@@ -313,9 +316,9 @@ background-color: #333333;
 """
 
 
-class HandWritingTab(QWidget):
+class HandWritingWidget(QWidget):
     def __init__(self, model, parent=None):
-        super(HandWritingTab, self).__init__()
+        super(HandWritingWidget, self).__init__()
 
         self.barGraph = BarGraph(self)
         self.scribbleArea = ScribbleArea(self.barGraph, model, parent=self)
@@ -338,9 +341,16 @@ class HandWritingTab(QWidget):
         self.scribbleArea.clearImage()
 
 
-class ModelEditorTab(QWidget):
+class LayerEditorTab(QTabWidget):
+    def __init__(self, parent=None):
+        super(LayerEditorTab, self).__init__(parent)
+        conv2d_editor = Conv2dEditor(self)
+        self.addTab(conv2d_editor, "畳み込み層")
+
+
+class ModelEditorWidget(QWidget):
     def __init__(self, model, parent=None):
-        super(ModelEditorTab, self).__init__()
+        super(ModelEditorWidget, self).__init__()
         self.model = model
         self.reset_model_btn = QPushButton("モデルを初期化", self)
         self.reset_model_btn.clicked.connect(self.reset_model)
@@ -350,12 +360,15 @@ class ModelEditorTab(QWidget):
         self.evaluate_btn.clicked.connect(self.evaluate_model)
         self.save_btn = QPushButton("モデルを保存", self)
         self.save_btn.clicked.connect(self.save_model)
+        self.layer_editor = LayerEditorTab(self)
 
     def resizeEvent(self, event):
         self.reset_model_btn.move(self.width() * 0.1, self.height() * 0.05)
         self.load_defo_btn.move(self.width() * 0.1, self.height() * 0.1)
         self.evaluate_btn.move(self.width() * 0.1, self.height() * 0.15)
         self.save_btn.move(self.width() * 0.1, self.height() * 0.2)
+        self.layer_editor.move(self.width() * 0.1, self.height() * 0.3)
+        self.layer_editor.resize(self.width() * 0.5, self.height() * 0.5)
 
     def reset_model(self):
         try:
@@ -390,13 +403,13 @@ class MainWindow(QMainWindow):
 
         self.model = MnistModel(self.textArea, self.progress_bar)
 
-        self.HandWritingTab = HandWritingTab(self.model, self)
-        self.ModelEditorTab = ModelEditorTab(self.model, self)
+        self.HandWriting = HandWritingWidget(self.model, self)
+        self.ModelEditor = ModelEditorWidget(self.model, self)
         self.tab = QTabWidget(self)
-        self.tab.addTab(self.HandWritingTab, "tab1")
-        self.tab.addTab(self.ModelEditorTab, "tab2")
+        self.tab.addTab(self.HandWriting, "tab1")
+        self.tab.addTab(self.ModelEditor, "tab2")
 
-        self.model.set_update_bar_func(self.HandWritingTab.scribbleArea.outputAcc)
+        self.model.set_update_bar_func(self.HandWriting.scribbleArea.outputAcc)
 
         self.learn_btn = QPushButton("学習開始", self)
         self.learn_btn.clicked.connect(self.learn)
@@ -438,20 +451,20 @@ class MainWindow(QMainWindow):
             event.ignore()
 
     def showImage(self):
-        self.HandWritingTab.scribbleArea.showImage()
+        self.HandWriting.scribbleArea.showImage()
 
     def penColor(self):
-        newColor = QColorDialog.getColor(self.HandWritingTab.scribbleArea.penColor())
+        newColor = QColorDialog.getColor(self.HandWriting.scribbleArea.penColor())
         if newColor.isValid():
             self.HandWritingTab.scribbleArea.setPenColor(newColor)
 
     def penWidth(self):
         newWidth, ok = QInputDialog.getInt(self, "MNIST GUI",
                                            "Select pen width:",
-                                           self.HandWritingTab.scribbleArea.penWidth(),
+                                           self.HandWriting.scribbleArea.penWidth(),
                                            1, 200, 1)
         if ok:
-            self.HandWritingTab.scribbleArea.setPenWidth(newWidth)
+            self.HandWriting.scribbleArea.setPenWidth(newWidth)
 
     def about(self):
         QMessageBox.about(self, "About MNIST GUI",
@@ -471,7 +484,7 @@ class MainWindow(QMainWindow):
                                    triggered=self.penWidth)
 
         self.clearScreenAct = QAction("&Clear Screen", self, shortcut="Space",
-                                      triggered=self.HandWritingTab.scribbleArea.clearImage)
+                                      triggered=self.HandWriting.scribbleArea.clearImage)
 
         self.aboutAct = QAction("&About", self, triggered=self.about)
 
