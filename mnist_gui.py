@@ -13,6 +13,7 @@ from keras.layers.normalization import BatchNormalization
 from keras.optimizers import SGD, Adam
 from keras.models import load_model
 from keras.callbacks import LambdaCallback
+import sklearn.metrics
 from sklearn import datasets
 from sklearn.model_selection import train_test_split
 
@@ -157,6 +158,13 @@ class MnistModel(threading.Thread):
                            optimizer=Adam(lr=0.01),
                            metrics=['accuracy'])
         self.model.summary()
+
+    def report_evaluation(self):
+        y = self.model.predict(self.X_test)
+        y_pred = [np.argmax(onehot) for onehot in y]
+        y_true = [np.argmax(onehot) for onehot in self.Y_test]
+        # return sklearn.metrics.classification_report(y_true, y_pred)
+        return float(sklearn.metrics.f1_score(y_true, y_pred, average='weighted'))
 
 
 class BarGraph(QWidget):
@@ -332,10 +340,13 @@ class ModelEditorTab(QWidget):
         self.reset_model_btn.clicked.connect(self.reset_model)
         self.load_defo_btn = QPushButton("学習済みのモデルをロード", self)
         self.load_defo_btn.clicked.connect(self.load_defo)
+        self.evaluate_btn = QPushButton("モデルを評価", self)
+        self.evaluate_btn.clicked.connect(self.evaluate_model)
 
     def resizeEvent(self, event):
         self.reset_model_btn.move(self.width() * 0.1, self.height() * 0.05)
         self.load_defo_btn.move(self.width() * 0.1, self.height() * 0.1)
+        self.evaluate_btn.move(self.width() * 0.1, self.height() * 0.15)
 
     def reset_model(self):
         try:
@@ -348,6 +359,9 @@ class ModelEditorTab(QWidget):
             self.model.load(default_model_path)
         except RuntimeError as e:
             print(e)
+
+    def evaluate_model(self):
+        print(self.model.report_evaluation())
 
 
 class MainWindow(QMainWindow):
