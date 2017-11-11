@@ -43,6 +43,8 @@ class MnistModel(threading.Thread):
             self.set_model()
         self.graph = tf.get_default_graph()
 
+        self.update_bar_func = None
+
     def _set_train_and_test_data(self):
         np.random.seed(0)
         n = len(self.mnist.data)
@@ -61,6 +63,9 @@ class MnistModel(threading.Thread):
             raise RuntimeError("学習中なのでモデルのロードはできません。")
         else:
             self.model = load_model(s)
+
+    def set_update_bar_func(self, update_bar_func):
+        self.update_bar_func = update_bar_func
 
     def run(self):
         """学習を実行する。時間がかかるのでマルチスレッド化してある。"""
@@ -85,6 +90,8 @@ class MnistModel(threading.Thread):
                                                              num_batch,
                                                              logs['acc'])))
                 self.logger.moveCursor(QTextCursor.End)
+                if self.update_bar_func is not None:
+                    self.update_bar_func()
 
             def epoch_end_out(epoch, logs):
                 self.logger.append(str(logs))
@@ -359,6 +366,8 @@ class MainWindow(QMainWindow):
         self.tab = QTabWidget(self)
         self.tab.addTab(self.HandWritingTab, "tab1")
         self.tab.addTab(self.ModelEditorTab, "tab2")
+
+        self.model.set_update_bar_func(self.HandWritingTab.scribbleArea.outputAcc)
 
         self.learn_btn = QPushButton("学習開始", self)
         self.learn_btn.clicked.connect(self.learn)
