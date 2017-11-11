@@ -16,6 +16,7 @@ from keras.callbacks import LambdaCallback
 from sklearn import datasets
 from sklearn.model_selection import train_test_split
 
+default_model_path = './model.hdf5'
 
 class MnistModel(threading.Thread):
     def __init__(self, logger, progress):
@@ -32,7 +33,7 @@ class MnistModel(threading.Thread):
 
         self.model = None
         try:
-            self.load('./model.hdf5')
+            self.load(default_model_path)
         except:
             self.set_model()
         self.graph = tf.get_default_graph()
@@ -308,8 +309,23 @@ class HandWritingTab(QWidget):
 
 
 class ModelEditorTab(QWidget):
-    def __init__(self, parent=None):
+    def __init__(self, model, parent=None):
         super(ModelEditorTab, self).__init__()
+        self.model = model
+        self.reset_model_btn = QPushButton("モデルを初期化", self)
+        self.reset_model_btn.clicked.connect(self.reset_model)
+        self.load_defo_btn = QPushButton("学習済みのモデルをロード", self)
+        self.load_defo_btn.clicked.connect(self.load_defo)
+
+    def resizeEvent(self, event):
+        self.reset_model_btn.move(self.width() * 0.1, self.height() * 0.05)
+        self.load_defo_btn.move(self.width() * 0.1, self.height() * 0.1)
+
+    def reset_model(self):
+        self.model.set_model()
+
+    def load_defo(self):
+        self.model.load(default_model_path)
 
 
 class MainWindow(QMainWindow):
@@ -324,7 +340,7 @@ class MainWindow(QMainWindow):
         self.model = MnistModel(self.textArea, self.progress_bar)
 
         self.HandWritingTab = HandWritingTab(self.model, self)
-        self.ModelEditorTab = ModelEditorTab(self)
+        self.ModelEditorTab = ModelEditorTab(self.model, self)
         self.tab = QTabWidget(self)
         self.tab.addTab(self.HandWritingTab, "tab1")
         self.tab.addTab(self.ModelEditorTab, "tab2")
