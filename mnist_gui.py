@@ -21,22 +21,27 @@ class MnistModel(threading.Thread):
     def __init__(self, logger):
         super(MnistModel, self).__init__()
         self.logger = logger
-        self.mnist = datasets.fetch_mldata('MNIST original', data_home='.')
 
+        self.mnist = datasets.fetch_mldata('MNIST original', data_home='.')
         self.X_train = None
         self.Y_train = None
         self.X_test = None
         self.Y_test = None
-        self.shuffle()
+        self._set_train_and_test_data()
 
         self.model = None
+        try:
+            self.load('./model.hdf5')
+        except:
+            self.set_model()
         self.graph = tf.get_default_graph()
 
         self.learn_event = threading.Event()
         self.learn_event.clear()
         self._exit = False
 
-    def shuffle(self):
+    def _set_train_and_test_data(self):
+        np.random.seed(0)
         n = len(self.mnist.data)
         indices = np.random.permutation(range(n))[:n]
 
@@ -283,7 +288,6 @@ class MainWindow(QMainWindow):
         self.textArea = QTextBrowser(self)
 
         self.model = MnistModel(self.textArea)
-        self.model.load('./model.hdf5')
 
         self.scribbleArea = ScribbleArea(self.barGraph, self.model)
         self.setCentralWidget(self.scribbleArea)
