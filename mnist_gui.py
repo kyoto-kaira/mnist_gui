@@ -281,35 +281,54 @@ background-color: #333333;
 """
 
 
+class HandWritingTab(QWidget):
+    def __init__(self, model, parent=None):
+        super(HandWritingTab, self).__init__()
+
+        self.barGraph = BarGraph(self)
+        self.scribbleArea = ScribbleArea(self.barGraph, model, parent=self)
+        self.reset_btn = QPushButton("リセット", self)
+        self.reset_btn.clicked.connect(self.reset_screen)
+
+    def resizeEvent(self, event):
+        self.reset_btn.move(self.width() * 0.01, self.height() * 0.01)
+
+        self.scribbleArea.move(self.width() * 0.01, self.height() * 0.1)
+        self.scribbleArea.resize(self.width() * 0.7, self.width() * 0.7)
+
+        self.barGraph.move(self.width() * 0.75, self.height() * 0.1)
+        self.barGraph.resize(self.width() * 0.2, self.height() * 0.8)
+
+    def reset_screen(self, event):
+        self.scribbleArea.clearImage()
+
+
+class ModelEditorTab(QWidget):
+    def __init__(self, parent=None):
+        super(ModelEditorTab, self).__init__()
+
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super(MainWindow, self).__init__()
 
         self.setStyleSheet(appStyle)
 
-        layout = QHBoxLayout()
-        self.barGraph = BarGraph(self)
         self.textArea = QTextBrowser(self)
         self.progress_bar = QProgressBar(self)
 
         self.model = MnistModel(self.textArea, self.progress_bar)
 
-        self.scribbleArea = ScribbleArea(self.barGraph, self.model)
-        self.setCentralWidget(self.scribbleArea)
-        self.reset_btn = QPushButton("リセット", self)
-        self.reset_btn.clicked.connect(self.reset_screen)
+        self.HandWritingTab = HandWritingTab(self.model, self)
+        self.ModelEditorTab = ModelEditorTab(self)
+        self.tab = QTabWidget(self)
+        self.tab.addTab(self.HandWritingTab, "tab1")
+        self.tab.addTab(self.ModelEditorTab, "tab2")
+
         self.learn_btn = QPushButton("学習開始", self)
         self.learn_btn.clicked.connect(self.learn)
         self.stop_btn = QPushButton("学習中止", self)
         self.stop_btn.clicked.connect(self.stop_learning)
-        layout.addWidget(self.reset_btn)
-        layout.addWidget(self.learn_btn)
-        layout.addWidget(self.stop_btn)
-        layout.addWidget(self.progress_bar)
-        layout.addWidget(self.textArea)
-        layout.addWidget(self.scribbleArea)
-        layout.addWidget(self.barGraph)
-        self.setLayout(layout)
 
         self.createActions()
         self.createMenus()
@@ -320,10 +339,9 @@ class MainWindow(QMainWindow):
         self.model.start()
 
     def resizeEvent(self, event):
-        self.scribbleArea.move(self.width() * 0.2, self.height() * 0.1)
-        self.scribbleArea.resize(self.height() * 0.7, self.height() * 0.7)
+        self.tab.move(self.width() * 0.25, self.height() * 0.05)
+        self.tab.resize(self.width() * 0.7, self.height())
 
-        self.reset_btn.move(self.width() * 0.01, self.height() * 0.2)
         self.learn_btn.move(self.width() * 0.01, self.height() * 0.3)
         self.stop_btn.move(self.width() * 0.01, self.height() * 0.35)
 
@@ -332,12 +350,6 @@ class MainWindow(QMainWindow):
 
         self.textArea.move(self.width() * 0.01, self.height() * 0.4)
         self.textArea.resize(self.width() * 0.18, self.height() * 0.5)
-
-        self.barGraph.move(self.width() * 0.75, self.height() * 0.1)
-        self.barGraph.resize(self.width() * 0.2, self.height() * 0.8)
-
-    def reset_screen(self, event):
-        self.scribbleArea.clearImage()
 
     def learn(self, event):
         self.model.learn_event.set()
@@ -384,7 +396,7 @@ class MainWindow(QMainWindow):
                                    triggered=self.penWidth)
 
         self.clearScreenAct = QAction("&Clear Screen", self, shortcut="Ctrl+L",
-                                      triggered=self.scribbleArea.clearImage)
+                                      triggered=self.HandWritingTab.scribbleArea.clearImage)
 
         self.aboutAct = QAction("&About", self, triggered=self.about)
 
