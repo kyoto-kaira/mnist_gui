@@ -57,7 +57,7 @@ class MnistModel(threading.Thread):
         y = np.eye(10)[y.astype(int)]  # 1-of-K 表現に変換
 
         self.X_train, self.X_test, self.Y_train, self.Y_test\
-            = train_test_split(x, y, train_size=0.8)
+            = train_test_split(x, y, test_size=0.2)
 
     def load(self, path):
         if self._is_learning:
