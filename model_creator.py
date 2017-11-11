@@ -24,7 +24,7 @@ class ActivationLayer(LayerBase):
         self.output_shape = input_shape
 
     def get_code(self):
-        return " model.add(Activation('{}', input_shape={}));"\
+        return "model.add(Activation('{}', input_shape={})); "\
                .format(self.func_name,
                        str(self.input_shape))
 
@@ -46,7 +46,7 @@ class DenseLayer(LayerBase):
         self.output_shape = (units,)
 
     def get_code(self):
-        return " model.add(Dense({}, input_shape={}));"\
+        return "model.add(Dense({}, input_shape={})); "\
                .format(self.units,
                        str(self.input_shape))
 
@@ -59,7 +59,7 @@ class FlattenLayer(LayerBase):
         self.output_shape = (dim,)
 
     def get_code(self):
-        return " model.add(Flatten(input_shape={}));" \
+        return "model.add(Flatten(input_shape={})); " \
                .format(str(self.input_shape))
 
 
@@ -85,19 +85,10 @@ class Conv2dLayer(LayerBase):
         self.output_shape = (output_x, output_y, filters)
 
     def get_code(self):
-        return " model.add(Conv2D({}, {}, input_shape={}));" \
+        return "model.add(Conv2D({}, {}, input_shape={})); " \
             .format(self.filters,
                     str(self.kernel),
                     str(self.input_shape))
-
-
-class InitialLayer(LayerBase):
-    def __init__(self, input_shape):
-        self.input_shape = input_shape
-        self.output_shape = input_shape
-
-    def get_code(self):
-        return "model = Sequential();"
 
 
 class CompileLayer(LayerBase):
@@ -108,7 +99,7 @@ class CompileLayer(LayerBase):
         self.output_shape = input_shape
 
     def get_code(self):
-        return " model.compile(loss='categorical_crossentropy', optimizer='SGD', metrics=['acc']);"
+        return "model.compile(loss='categorical_crossentropy', optimizer='SGD', metrics=['acc']);"
 
 
 class ModelCreator(object):
@@ -123,7 +114,7 @@ class ModelCreator(object):
     def __init__(self):
         self.shape = (28, 28, 1)
         self.model_structure = []
-        self.add_initial()
+        self.valid = False
         pass
 
     def _add_layer(self, layer):
@@ -142,18 +133,18 @@ class ModelCreator(object):
     def add_conv2d(self, filters, kernel_x, kernel_y):
         self._add_layer(Conv2dLayer(self.shape, filters, kernel_x, kernel_y))
 
-    def add_initial(self):
-        self._add_layer(InitialLayer(self.shape))
-
     def add_compile(self):
         self._add_layer(CompileLayer(self.shape))
-        self.get_model()
+        self.valid = True
 
     def get_model(self):
-        # todo エラー処理
+        if not self.valid:
+            raise RuntimeError("モデルが正しくありません。モデルを修正してください。")
         code = ""
         for layer in self.model_structure:
             code += layer.get_code()
         print(code)
-        # exec(code)
-        # return model
+        model = Sequential()
+        exec(code)
+        model.summary()
+        return model

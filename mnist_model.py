@@ -134,36 +134,38 @@ class MnistModel(threading.Thread):
             return
         return self.model.predict(image).reshape(10)
 
-    def set_model(self):
+    def set_model(self, model=None):
         if self._is_learning:
             raise RuntimeError("学習中なので、モデルの設定はできません。")
+        if model is None:
+            self.model = Sequential()
 
-        self.model = Sequential()
+            self.model.add(Convolution2D(15,
+                                         (3, 3),
+                                         input_shape=(28, 28, 1),
+                                         activation='relu'))
+            self.model.add(MaxPooling2D())
+            self.model.add(Convolution2D(15,
+                                         (3, 3),
+                                         activation='relu'))
+            self.model.add(MaxPooling2D())
+            self.model.add(Flatten())
 
-        self.model.add(Convolution2D(15,
-                                     (3, 3),
-                                     input_shape=(28, 28, 1),
-                                     activation='relu'))
-        self.model.add(MaxPooling2D())
-        self.model.add(Convolution2D(15,
-                                     (3, 3),
-                                     activation='relu'))
-        self.model.add(MaxPooling2D())
-        self.model.add(Flatten())
+            self.model.add(BatchNormalization())
 
-        self.model.add(BatchNormalization())
+            self.model.add(Dense(200))
 
-        self.model.add(Dense(200))
+            self.model.add(Dropout(0.5))
 
-        self.model.add(Dropout(0.5))
+            self.model.add(Dense(10))
+            self.model.add(Activation('softmax'))
 
-        self.model.add(Dense(10))
-        self.model.add(Activation('softmax'))
-
-        self.model.compile(loss='categorical_crossentropy',
-                           optimizer=Adam(lr=0.01),
-                           metrics=['accuracy'])
-        self.model.summary()
+            self.model.compile(loss='categorical_crossentropy',
+                               optimizer=Adam(lr=0.01),
+                               metrics=['accuracy'])
+            self.model.summary()
+        else:
+            self.model = model
 
     def report_evaluation(self):
         y = self.model.predict(self.X_test)
@@ -171,4 +173,3 @@ class MnistModel(threading.Thread):
         y_true = [np.argmax(onehot) for onehot in self.Y_test]
         # return sklearn.metrics.classification_report(y_true, y_pred)
         return float(sklearn.metrics.f1_score(y_true, y_pred, average='weighted'))
-

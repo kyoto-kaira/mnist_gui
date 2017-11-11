@@ -36,6 +36,8 @@ class ModelEditorWidget(QWidget):
         self.evaluate_btn.clicked.connect(self.evaluate_model)
         self.save_btn = QPushButton("モデルを保存", self)
         self.save_btn.clicked.connect(self.save_model)
+        self.load_from_editor_btn = QPushButton("エディターからモデルをロード", self)
+        self.load_from_editor_btn.clicked.connect(self.load_from_editor)
         self.layer_editor = LayerEditorTab(self)
 
     def resizeEvent(self, event):
@@ -45,6 +47,7 @@ class ModelEditorWidget(QWidget):
         self.save_btn.move(self.width() * 0.1, self.height() * 0.2)
         self.layer_editor.move(self.width() * 0.1, self.height() * 0.3)
         self.layer_editor.resize(self.width() * 0.5, self.height() * 0.5)
+        self.load_from_editor_btn.move(self.width() * 0.1, self.height() * 0.8)
 
     def reset_model(self):
         try:
@@ -63,6 +66,13 @@ class ModelEditorWidget(QWidget):
 
     def save_model(self):
         try:
-            self.model.model.save(default_model_path)
+            self.model.save(default_model_path)
+        except RuntimeError as e:
+            print(e)
+
+    def load_from_editor(self):
+        try:
+            model = self.layer_editor.model_st.get_model()
+            self.model.set_model(model)
         except RuntimeError as e:
             print(e)
