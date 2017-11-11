@@ -5,6 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 import threading
+import tensorflow as tf
 from keras.models import Sequential
 from keras.layers.core import Dense, Activation, Flatten, Dropout
 from keras.layers.convolutional import Convolution2D, MaxPooling2D
@@ -21,12 +22,15 @@ class MnistModel(threading.Thread):
         super(MnistModel, self).__init__()
         self.logger = logger
         self.mnist = datasets.fetch_mldata('MNIST original', data_home='.')
+
         self.X_train = None
         self.Y_train = None
         self.X_test = None
         self.Y_test = None
-        self.model = None
         self.shuffle()
+
+        self.model = None
+        self.graph = tf.get_default_graph()
 
         self.learn_event = threading.Event()
         self.learn_event.clear()
@@ -61,16 +65,23 @@ class MnistModel(threading.Thread):
                 return
             self.logger.append("start learning")
 
-            def out(epoch, logs):
+            def batch_end_out(epoch, logs):
                 self.logger.append(str("{}/{} {:.4f}".format(epoch + 1,
                                                              num_batch,
                                                              logs['acc'])))
                 self.logger.moveCursor(QTextCursor.End)
 
-            self.model.fit(self.X_train, self.Y_train,
-                           epochs=epochs,
-                           batch_size=batch_size,
-                           callbacks=[LambdaCallback(on_batch_end=out)])
+            def epoch_end_out(epoch, logs):
+                self.logger.append(str(logs))
+                self.logger.moveCursor(QTextCursor.End)
+
+            with self.graph.as_default():
+                self.model.fit(self.X_train, self.Y_train,
+                               validation_data=(self.X_test, self.Y_test),
+                               epochs=epochs,
+                               batch_size=batch_size,
+                               callbacks=[LambdaCallback(on_batch_end=batch_end_out,
+                                                         on_epoch_end=epoch_end_out)])
 
             if self._exit:
                 break
