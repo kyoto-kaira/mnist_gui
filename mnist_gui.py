@@ -18,9 +18,10 @@ from sklearn.model_selection import train_test_split
 
 
 class MnistModel(threading.Thread):
-    def __init__(self, logger):
+    def __init__(self, logger, progress):
         super(MnistModel, self).__init__()
         self.logger = logger
+        self.progress = progress
 
         self.mnist = datasets.fetch_mldata('MNIST original', data_home='.')
         self.X_train = None
@@ -68,9 +69,12 @@ class MnistModel(threading.Thread):
             if self.model is None:
                 self.logger.append("no model")
                 return
+
+            self.progress.setValue(0)
             self.logger.append("start learning")
 
             def batch_end_out(epoch, logs):
+                self.progress.setValue((epoch + 1) / num_batch * 100)
                 self.logger.append(str("{}/{} {:.4f}".format(epoch + 1,
                                                              num_batch,
                                                              logs['acc'])))
@@ -286,8 +290,9 @@ class MainWindow(QMainWindow):
         layout = QHBoxLayout()
         self.barGraph = BarGraph(self)
         self.textArea = QTextBrowser(self)
+        self.progress_bar = QProgressBar(self)
 
-        self.model = MnistModel(self.textArea)
+        self.model = MnistModel(self.textArea, self.progress_bar)
 
         self.scribbleArea = ScribbleArea(self.barGraph, self.model)
         self.setCentralWidget(self.scribbleArea)
@@ -300,6 +305,7 @@ class MainWindow(QMainWindow):
         layout.addWidget(self.reset_btn)
         layout.addWidget(self.learn_btn)
         layout.addWidget(self.stop_btn)
+        layout.addWidget(self.progress_bar)
         layout.addWidget(self.textArea)
         layout.addWidget(self.scribbleArea)
         layout.addWidget(self.barGraph)
@@ -313,15 +319,6 @@ class MainWindow(QMainWindow):
 
         self.model.start()
 
-    def reset_screen(self, event):
-        self.scribbleArea.clearImage()
-
-    def learn(self, event):
-        self.model.learn_event.set()
-
-    def stop_learning(self, event):
-        self.model.stop_learning()
-
     def resizeEvent(self, event):
         self.scribbleArea.move(self.width() * 0.2, self.height() * 0.1)
         self.scribbleArea.resize(self.height() * 0.7, self.height() * 0.7)
@@ -330,11 +327,23 @@ class MainWindow(QMainWindow):
         self.learn_btn.move(self.width() * 0.01, self.height() * 0.3)
         self.stop_btn.move(self.width() * 0.01, self.height() * 0.35)
 
+        self.progress_bar.move(self.width() * 0.01, self.height() * 0.9)
+        self.progress_bar.resize(self.width() * 0.5, self.height() * 0.05)
+
         self.textArea.move(self.width() * 0.01, self.height() * 0.4)
         self.textArea.resize(self.width() * 0.18, self.height() * 0.5)
 
         self.barGraph.move(self.width() * 0.75, self.height() * 0.1)
         self.barGraph.resize(self.width() * 0.2, self.height() * 0.8)
+
+    def reset_screen(self, event):
+        self.scribbleArea.clearImage()
+
+    def learn(self, event):
+        self.model.learn_event.set()
+
+    def stop_learning(self, event):
+        self.model.stop_learning()
 
     def closeEvent(self, event):
         if self.exitWarn():
