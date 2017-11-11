@@ -55,14 +55,16 @@ class MnistModel(threading.Thread):
                 break
             epochs = 1
             batch_size = 1000
+            num_batch = len(self.X_train) // batch_size
             if self.model is None:
                 self.logger.append("no model")
                 return
-            self.logger.append("start learn")
+            self.logger.append("start learning")
 
             def out(epoch, logs):
-                self.logger.append(str(epoch))
-                self.logger.append(str(logs))
+                self.logger.append(str("{}/{} {:.4f}".format(epoch + 1,
+                                                             num_batch,
+                                                             logs['acc'])))
                 self.logger.moveCursor(QTextCursor.End)
 
             self.model.fit(self.X_train, self.Y_train,
