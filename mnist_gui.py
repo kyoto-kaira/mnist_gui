@@ -366,18 +366,20 @@ class MainWindow(QMainWindow):
             event.ignore()
 
     def showImage(self):
-        self.scribbleArea.showImage()
+        self.HandWritingTab.scribbleArea.showImage()
 
     def penColor(self):
-        newColor = QColorDialog.getColor(self.scribbleArea.penColor())
+        newColor = QColorDialog.getColor(self.HandWritingTab.scribbleArea.penColor())
         if newColor.isValid():
-            self.scribbleArea.setPenColor(newColor)
+            self.HandWritingTab.scribbleArea.setPenColor(newColor)
 
     def penWidth(self):
         newWidth, ok = QInputDialog.getInt(self, "MNIST GUI",
-                                           "Select pen width:", self.scribbleArea.penWidth(), 1, 50, 1)
+                                           "Select pen width:",
+                                           self.HandWritingTab.scribbleArea.penWidth(),
+                                           1, 200, 1)
         if ok:
-            self.scribbleArea.setPenWidth(newWidth)
+            self.HandWritingTab.scribbleArea.setPenWidth(newWidth)
 
     def about(self):
         QMessageBox.about(self, "About MNIST GUI",
