@@ -57,7 +57,7 @@ class ModelDisplayWidget(QTextBrowser):
                                                         layer.filters))
                 self._append_shape(layer.output_shape)
             elif isinstance(layer, CompileLayer):
-                self.append("output")
+                self.append("output (loss_func=cross_entropy)")
             else:
                 self.append("unknown layer")
 
@@ -80,6 +80,8 @@ class ModelEditorWidget(QWidget):
         self.save_btn.clicked.connect(self.save_model)
         self.load_from_editor_btn = QPushButton("エディターからモデルをロード", self)
         self.load_from_editor_btn.clicked.connect(self.load_from_editor)
+        self.reset_editor_model_btn = QPushButton("エディターのモデルを初期化", self)
+        self.reset_editor_model_btn.clicked.connect(self.reset_editor_model)
         self.layer_editor = LayerEditorTab(self.model_creator, self)
         self.model_display = ModelDisplayWidget(self.model_creator, self)
         self.model_creator.set_changed_notify(self.model_display.update_notify)
@@ -92,6 +94,7 @@ class ModelEditorWidget(QWidget):
         self.layer_editor.move(self.width() * 0.1, self.height() * 0.3)
         self.layer_editor.resize(self.width() * 0.5, self.height() * 0.5)
         self.load_from_editor_btn.move(self.width() * 0.1, self.height() * 0.8)
+        self.reset_editor_model_btn.move(self.width() * 0.1, self.height() * 0.9)
         self.model_display.move(self.width() * 0.6, self.height() * 0.05)
         self.model_display.resize(self.width() * 0.5, self.height() * 0.9)
 
@@ -122,3 +125,6 @@ class ModelEditorWidget(QWidget):
             self.model.set_model(model)
         except RuntimeError as e:
             print(e)
+
+    def reset_editor_model(self):
+        self.model_creator.clear()

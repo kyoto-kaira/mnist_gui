@@ -104,7 +104,8 @@ class CompileLayer(LayerBase):
 
 class ModelCreator(object):
     '''
-    MNIST で使うモデルをリストや辞書を使って表現する。
+    MNIST で使うモデルの構築をするクラス
+
     モデルの編集を関数として提供する。
     keras のモデルとして、出力する。
     input_shape=(28, 28, 1)
@@ -112,22 +113,35 @@ class ModelCreator(object):
     となるようなモデルを構築する。
     '''
     def __init__(self):
-        self.shape = (28, 28, 1)
-        self.model_structure = []
-        self.valid = False
         self.changed_notify_func = None
+
+        self.shape = None
+        self.model_structure = None
+        self.valid = None
+        self.is_last_layer_softmax = None
+        self.clear()
         pass
 
     def __iter__(self):
         return iter(self.model_structure)
 
+    def clear(self):
+        self.shape = (28, 28, 1)
+        self.model_structure = []
+        self.valid = False
+        self.is_last_layer_softmax = False
+        self.call_notify_func()
+
     def _add_layer(self, layer):
         self.model_structure.append(layer)
         self.shape = layer.output_shape
+        self.is_last_layer_softmax = False
         self.call_notify_func()
 
-    def add_activation(self, str):
-        self._add_layer(ActivationLayer(self.shape, str))
+    def add_activation(self, func_name):
+        self._add_layer(ActivationLayer(self.shape, func_name))
+        if func_name == "softmax":
+            self.is_last_layer_softmax = True
 
     def add_dense(self, units):
         self._add_layer(DenseLayer(self.shape, units))
@@ -139,7 +153,11 @@ class ModelCreator(object):
         self._add_layer(Conv2dLayer(self.shape, filters, kernel_x, kernel_y))
 
     def add_compile(self):
-        self._add_layer(CompileLayer(self.shape))
+        layer = CompileLayer(self.shape)
+        if not self.is_last_layer_softmax:
+            self.add_activation("softmax")
+            print("最終層に softmax の層を追加しました。")
+        self._add_layer(layer)
         self.valid = True
 
     def get_model(self):
