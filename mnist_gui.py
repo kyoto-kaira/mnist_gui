@@ -27,8 +27,8 @@ class MainWindow(QMainWindow):
         self.HandWriting = HandWritingWidget(self.model, self)
         self.ModelEditor = ModelEditorWidget(self.model, self)
         self.tab = QTabWidget(self)
-        self.tab.addTab(self.HandWriting, "tab1")
-        self.tab.addTab(self.ModelEditor, "tab2")
+        self.tab.addTab(self.HandWriting, "Hand Writing")
+        self.tab.addTab(self.ModelEditor, "Model Editor")
 
         self.model.set_update_bar_func(self.HandWriting.scribbleArea.outputAcc)
 
@@ -47,7 +47,7 @@ class MainWindow(QMainWindow):
 
     def resizeEvent(self, event):
         self.tab.move(self.width() * 0.25, self.height() * 0.05)
-        self.tab.resize(self.width() * 0.7, self.height())
+        self.tab.resize(self.width() * 0.7, self.height() * 0.9)
 
         self.learn_btn.move(self.width() * 0.01, self.height() * 0.3)
         self.stop_btn.move(self.width() * 0.01, self.height() * 0.35)

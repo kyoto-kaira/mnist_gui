@@ -115,11 +115,16 @@ class ModelCreator(object):
         self.shape = (28, 28, 1)
         self.model_structure = []
         self.valid = False
+        self.changed_notify_func = None
         pass
+
+    def __iter__(self):
+        return iter(self.model_structure)
 
     def _add_layer(self, layer):
         self.model_structure.append(layer)
         self.shape = layer.output_shape
+        self.call_notify_func()
 
     def add_activation(self, str):
         self._add_layer(ActivationLayer(self.shape, str))
@@ -148,3 +153,10 @@ class ModelCreator(object):
         exec(code)
         model.summary()
         return model
+
+    def set_changed_notify(self, func):
+        self.changed_notify_func = func
+
+    def call_notify_func(self):
+        if self.changed_notify_func is not None:
+            self.changed_notify_func()

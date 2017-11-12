@@ -3,20 +3,23 @@ from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 
 from layer_editor_widgets import *
-import model_creator
+from model_creator import ModelCreator
 
 default_model_path = './model.hdf5'
 
 
 class LayerEditorTab(QTabWidget):
-    def __init__(self, parent=None):
+    """
+    レイヤーの追加を提供する、タブウィジェット
+    """
+    def __init__(self, model_creator, parent=None):
         super(LayerEditorTab, self).__init__(parent)
-        self.model_st = model_creator.ModelCreator()
-        conv2d_editor = Conv2dEditor(self.model_st, self)
-        flatten_editor = FlattenEditor(self.model_st, self)
-        dense_editor = DenseEditor(self.model_st, self)
-        activation_editor = ActivationEditor(self.model_st, self)
-        compile_editor = CompileEditor(self.model_st, self)
+        self.model_creator = model_creator
+        conv2d_editor = Conv2dEditor(self.model_creator, self)
+        flatten_editor = FlattenEditor(self.model_creator, self)
+        dense_editor = DenseEditor(self.model_creator, self)
+        activation_editor = ActivationEditor(self.model_creator, self)
+        compile_editor = CompileEditor(self.model_creator, self)
         self.addTab(conv2d_editor, "畳み込み層")
         self.addTab(flatten_editor, "一次元化層")
         self.addTab(dense_editor, "全結合層")
@@ -24,10 +27,30 @@ class LayerEditorTab(QTabWidget):
         self.addTab(compile_editor, "コンパイル")
 
 
+class ModelDisplayWidget(QTextBrowser):
+    """
+    編集中のモデルを状態を出力するウィジェット
+    """
+    def __init__(self, model_creator, parent=None):
+        super(ModelDisplayWidget, self).__init__(parent)
+        self.model_creator = model_creator
+
+    def update_notify(self):
+        self.clear()
+        self.append("input")
+        self.append("(28, 28, 1)")
+        for layer in self.model_creator:
+            self.append(str(layer.output_shape))
+
+
 class ModelEditorWidget(QWidget):
+    """
+    モデルエディタータブの内容を表すウィジェット
+    """
     def __init__(self, model, parent=None):
         super(ModelEditorWidget, self).__init__()
         self.model = model
+        self.model_creator = ModelCreator()
         self.reset_model_btn = QPushButton("モデルを初期化", self)
         self.reset_model_btn.clicked.connect(self.reset_model)
         self.load_defo_btn = QPushButton("学習済みのモデルをロード", self)
@@ -38,7 +61,9 @@ class ModelEditorWidget(QWidget):
         self.save_btn.clicked.connect(self.save_model)
         self.load_from_editor_btn = QPushButton("エディターからモデルをロード", self)
         self.load_from_editor_btn.clicked.connect(self.load_from_editor)
-        self.layer_editor = LayerEditorTab(self)
+        self.layer_editor = LayerEditorTab(self.model_creator, self)
+        self.model_display = ModelDisplayWidget(self.model_creator, self)
+        self.model_creator.set_changed_notify(self.model_display.update_notify)
 
     def resizeEvent(self, event):
         self.reset_model_btn.move(self.width() * 0.1, self.height() * 0.05)
@@ -48,6 +73,8 @@ class ModelEditorWidget(QWidget):
         self.layer_editor.move(self.width() * 0.1, self.height() * 0.3)
         self.layer_editor.resize(self.width() * 0.5, self.height() * 0.5)
         self.load_from_editor_btn.move(self.width() * 0.1, self.height() * 0.8)
+        self.model_display.move(self.width() * 0.6, self.height() * 0.05)
+        self.model_display.resize(self.width() * 0.5, self.height() * 0.9)
 
     def reset_model(self):
         try:
@@ -72,7 +99,7 @@ class ModelEditorWidget(QWidget):
 
     def load_from_editor(self):
         try:
-            model = self.layer_editor.model_st.get_model()
+            model = self.model_creator.get_model()
             self.model.set_model(model)
         except RuntimeError as e:
             print(e)

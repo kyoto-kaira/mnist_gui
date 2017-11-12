@@ -5,14 +5,14 @@ from model_creator import ActivationLayer
 
 
 class LayerEditorBase(QWidget):
-    def __init__(self, model_st, parent=None):
+    def __init__(self, model_creator, parent=None):
         super(LayerEditorBase, self).__init__(parent)
 
         # 文字の色を白くするパレットを用意
         self.palette = QPalette()
         self.palette.setColor(QPalette.WindowText, Qt.white)
 
-        self.model_st = model_st
+        self.model_creator = model_creator
         self.add_btn = QPushButton("追加", self)
         self.add_btn.clicked.connect(self.add_layer)
 
@@ -28,8 +28,8 @@ class LayerEditorBase(QWidget):
 
 
 class ActivationEditor(LayerEditorBase):
-    def __init__(self, model_st, parent=None):
-        super(ActivationEditor, self).__init__(model_st, parent)
+    def __init__(self, model_creator, parent=None):
+        super(ActivationEditor, self).__init__(model_creator, parent)
         self.combo = QComboBox(self)
         for func_name in ActivationLayer.get_func_set():
             self.combo.addItem(func_name)
@@ -39,14 +39,14 @@ class ActivationEditor(LayerEditorBase):
 
     def add_layer(self, event):
         try:
-            self.model_st.add_activation(self.combo.currentText())
+            self.model_creator.add_activation(self.combo.currentText())
         except RuntimeError as e:
             print(e)
 
 
 class DenseEditor(LayerEditorBase):
-    def __init__(self, model_st, parent=None):
-        super(DenseEditor, self).__init__(model_st, parent)
+    def __init__(self, model_creator, parent=None):
+        super(DenseEditor, self).__init__(model_creator, parent)
 
         # ユニット数
         self.label_units = QLabel("units", self)
@@ -63,25 +63,25 @@ class DenseEditor(LayerEditorBase):
     def add_layer(self, event):
         units = self.input_units.value()
         try:
-            self.model_st.add_dense(units)
+            self.model_creator.add_dense(units)
         except RuntimeError as e:
             print(e)
 
 
 class FlattenEditor(LayerEditorBase):
-    def __init__(self, model_st, parent=None):
-        super(FlattenEditor, self).__init__(model_st, parent)
+    def __init__(self, model_creator, parent=None):
+        super(FlattenEditor, self).__init__(model_creator, parent)
 
     def add_layer(self, event):
         try:
-            self.model_st.add_flatten()
+            self.model_creator.add_flatten()
         except RuntimeError as e:
             print(e)
 
 
 class Conv2dEditor(LayerEditorBase):
-    def __init__(self, model_st, parent=None):
-        super(Conv2dEditor, self).__init__(model_st, parent)
+    def __init__(self, model_creator, parent=None):
+        super(Conv2dEditor, self).__init__(model_creator, parent)
 
         # フィルター数
         self.label_filters = QLabel("filters", self)
@@ -120,17 +120,17 @@ class Conv2dEditor(LayerEditorBase):
         kernel_x = self.input_x.value()
         kernel_y = self.input_y.value()
         try:
-            self.model_st.add_conv2d(filters, kernel_x, kernel_y)
+            self.model_creator.add_conv2d(filters, kernel_x, kernel_y)
         except RuntimeError as e:
             print(e)
 
 
 class CompileEditor(LayerEditorBase):
-    def __init__(self, model_st, parent=None):
-        super(CompileEditor, self).__init__(model_st, parent)
+    def __init__(self, model_creator, parent=None):
+        super(CompileEditor, self).__init__(model_creator, parent)
 
     def add_layer(self, event):
         try:
-            self.model_st.add_compile()
+            self.model_creator.add_compile()
         except RuntimeError as e:
             print(e)
