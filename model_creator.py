@@ -170,7 +170,7 @@ class ModelCreator(object):
 
         self.shape = None
         self.model_structure = None
-        self.valid = None
+        self.is_compiled = None
         self.is_last_layer_softmax = None
         self.clear()
         pass
@@ -181,11 +181,13 @@ class ModelCreator(object):
     def clear(self):
         self.shape = (28, 28, 1)
         self.model_structure = []
-        self.valid = False
+        self.is_compiled = False
         self.is_last_layer_softmax = False
         self.call_notify_func()
 
     def _add_layer(self, layer):
+        if self.is_compiled:
+            raise RuntimeError("コンパイルしてあります。")
         self.model_structure.append(layer)
         self.shape = layer.output_shape
         self.is_last_layer_softmax = False
@@ -215,15 +217,17 @@ class ModelCreator(object):
         self._add_layer(BatchNormalizationLayer(self.shape))
 
     def add_compile(self):
+        if self.is_compiled:
+            raise RuntimeError("コンパイルする必要はありません。")
         layer = CompileLayer(self.shape)
         if not self.is_last_layer_softmax:
             self.add_activation("softmax")
             print("最終層に softmax の層を追加しました。")
         self._add_layer(layer)
-        self.valid = True
+        self.is_compiled = True
 
     def get_model(self):
-        if not self.valid:
+        if not self.is_compiled:
             raise RuntimeError("モデルが正しくありません。モデルを修正してください。")
         code = ""
         for layer in self.model_structure:
