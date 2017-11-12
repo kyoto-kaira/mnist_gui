@@ -33,48 +33,23 @@ class LayerEditorTab(QTabWidget):
         self.addTab(compile_editor, "コンパイル")
 
 
-class ModelDisplayWidget(QTextBrowser):
+class ModelDisplayWidget(QListView):
     """
     編集中のモデルを状態を出力するウィジェット
     """
     def __init__(self, model_creator, parent=None):
         super(ModelDisplayWidget, self).__init__(parent)
+        self.list_model = QStringListModel()
+        self.setModel(self.list_model)
+        self.setFocusPolicy(Qt.NoFocus)
+
         self.model_creator = model_creator
 
-    def _append_shape(self, shape):
-        self.append("  " + str(shape))
-
     def update_notify(self):
-        self.clear()
-        self.append("input")
-        self._append_shape((28, 28, 1))
-        for layer in self.model_creator:
-            if isinstance(layer, DenseLayer):
-                self.append("Dense")
-                self._append_shape(layer.output_shape)
-            elif isinstance(layer, ActivationLayer):
-                self.append("Activation ({})".format(layer.func_name))
-            elif isinstance(layer, DropoutLayer):
-                self.append("Dropout ({})".format(layer.r_str))
-            elif isinstance(layer, FlattenLayer):
-                self.append("Flatten")
-                self._append_shape(layer.output_shape)
-            elif isinstance(layer, Conv2dLayer):
-                self.append("Conv ({}, {}) x {}".format(layer.kernel[0],
-                                                        layer.kernel[1],
-                                                        layer.filters))
-                self._append_shape(layer.output_shape)
-            elif isinstance(layer, MaxPool2dLayer):
-                self.append("MaxPool ({}, {})".format(layer.pool_size[0],
-                                                      layer.pool_size[1]))
-                self._append_shape(layer.output_shape)
-            elif isinstance(layer, BatchNormalizationLayer):
-                self.append("Batch Normalization")
-            elif isinstance(layer, CompileLayer):
-                self.append("output (loss_func=cross_entropy)")
-            else:
-                self.append("unknown layer")
-                self._append_shape(layer.output_shape)
+        str_i_list = self.model_creator.get_str_i_list()
+        str_list = [text for text, i in str_i_list]
+        self.list_model.setStringList(str_list)
+        print(str_i_list)
 
 
 class ModelEditorWidget(QWidget):

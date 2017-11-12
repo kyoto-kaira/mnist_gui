@@ -144,6 +144,15 @@ class BatchNormalizationLayer(LayerBase):
                .format(str(self.input_shape))
 
 
+class InputLayer(LayerBase):
+    def __init__(self, input_shape):
+        self.input_shape = input_shape
+        self.output_shape = input_shape
+
+    def get_code(self):
+        return ""
+
+
 class CompileLayer(LayerBase):
     def __init__(self, input_shape):
         if (len(input_shape) is not 1) or (input_shape[0] is not 10):
@@ -180,7 +189,7 @@ class ModelCreator(object):
 
     def clear(self):
         self.shape = (28, 28, 1)
-        self.model_structure = []
+        self.model_structure = [InputLayer(self.shape)]
         self.is_compiled = False
         self.is_last_layer_softmax = False
         self.call_notify_func()
@@ -244,3 +253,61 @@ class ModelCreator(object):
     def call_notify_func(self):
         if self.changed_notify_func is not None:
             self.changed_notify_func()
+
+    def get_str_i_list(self):
+        """
+        文字列のリストを返す。
+        文字列がどの層を表しているかがわかるように、層のインデックスとのタプルにする。
+        例:
+        [0] input                    , 0
+        [1]   (28, 28)               , 0
+        [0] (Conv2D (3, 3) x 10, 0)  , 1
+        [1]   (26, 26, 10)           , 1
+        [2] Conv2D (3, 3) x 10       , 2
+        [3]   (24, 24, 10)           , 2
+
+        :return: [(文字列, 層のインデックス), ...]
+        """
+        str_i_list = list()
+
+        def append(text, layer_index):
+            str_i_list.append((text, layer_index))
+
+        def append_shape(shape, layer_index):
+            str_i_list.append(("  " + str(shape), layer_index))
+
+        for i, layer in enumerate(self):
+            if isinstance(layer, DenseLayer):
+                append("Dense", i)
+                append_shape(layer.output_shape, i)
+            elif isinstance(layer, ActivationLayer):
+                append("Activation ({})".format(layer.func_name), i)
+            elif isinstance(layer, DropoutLayer):
+                append("Dropout ({})".format(layer.r_str), i)
+            elif isinstance(layer, FlattenLayer):
+                append("Flatten", i)
+                append_shape(layer.output_shape, i)
+            elif isinstance(layer, Conv2dLayer):
+                append("Conv ({}, {}) x {}".format(layer.kernel[0],
+                                                   layer.kernel[1],
+                                                   layer.filters),
+                       i)
+                append_shape(layer.output_shape, i)
+            elif isinstance(layer, MaxPool2dLayer):
+                append("MaxPool ({}, {})".format(layer.pool_size[0],
+                                                 layer.pool_size[1]),
+                       i)
+                append_shape(layer.output_shape, i)
+            elif isinstance(layer, BatchNormalizationLayer):
+                append("Batch Normalization", i)
+            elif isinstance(layer, InputLayer):
+                append("Input", i)
+                append_shape(layer.output_shape, i)
+            elif isinstance(layer, CompileLayer):
+                append("Output (loss_func=cross_entropy)", i)
+                append_shape(layer.output_shape, i)
+            else:
+                append("unknown layer")
+                append_shape(layer.output_shape, i)
+
+        return str_i_list
