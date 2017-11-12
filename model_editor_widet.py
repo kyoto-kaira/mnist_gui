@@ -3,7 +3,7 @@ from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 
 from layer_editor_widgets import *
-from model_creator import ModelCreator
+from model_creator import *
 
 default_model_path = './model.hdf5'
 
@@ -35,12 +35,31 @@ class ModelDisplayWidget(QTextBrowser):
         super(ModelDisplayWidget, self).__init__(parent)
         self.model_creator = model_creator
 
+    def _append_shape(self, shape):
+        self.append("  " + str(shape))
+
     def update_notify(self):
         self.clear()
         self.append("input")
-        self.append("(28, 28, 1)")
+        self._append_shape((28, 28, 1))
         for layer in self.model_creator:
-            self.append(str(layer.output_shape))
+            if isinstance(layer, ActivationLayer):
+                self.append("activation ({})".format(layer.func_name))
+            elif isinstance(layer, DenseLayer):
+                self.append("Dense")
+                self._append_shape(layer.output_shape)
+            elif isinstance(layer, FlattenLayer):
+                self.append("Flatten")
+                self._append_shape(layer.output_shape)
+            elif isinstance(layer, Conv2dLayer):
+                self.append("Conv ({}, {}) x {}".format(layer.kernel[0],
+                                                        layer.kernel[1],
+                                                        layer.filters))
+                self._append_shape(layer.output_shape)
+            elif isinstance(layer, CompileLayer):
+                self.append("output")
+            else:
+                self.append("unknown layer")
 
 
 class ModelEditorWidget(QWidget):
