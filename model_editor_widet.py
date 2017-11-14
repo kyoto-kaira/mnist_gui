@@ -33,23 +33,20 @@ class LayerEditorTab(QTabWidget):
         self.addTab(compile_editor, "コンパイル")
 
 
-class ModelDisplayWidget(QListView):
+class ModelDisplayWidget(QListWidget):
     """
     編集中のモデルを状態を出力するウィジェット
     """
     def __init__(self, model_creator, parent=None):
         super(ModelDisplayWidget, self).__init__(parent)
-        self.list_model = QStringListModel()
-        self.setModel(self.list_model)
         self.setFocusPolicy(Qt.NoFocus)
 
         self.model_creator = model_creator
 
     def update_notify(self):
-        str_i_list = self.model_creator.get_str_i_list()
-        str_list = [text for text, i in str_i_list]
-        self.list_model.setStringList(str_list)
-        print(str_i_list)
+        str_list = self.model_creator.get_str_list()
+        self.clear()
+        self.addItems(str_list)
 
 
 class ModelEditorWidget(QWidget):

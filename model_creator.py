@@ -254,60 +254,57 @@ class ModelCreator(object):
         if self.changed_notify_func is not None:
             self.changed_notify_func()
 
-    def get_str_i_list(self):
+    def get_str_list(self):
         """
         文字列のリストを返す。
-        文字列がどの層を表しているかがわかるように、層のインデックスとのタプルにする。
         例:
-        [0] input                    , 0
-        [1]   (28, 28)               , 0
-        [0] (Conv2D (3, 3) x 10, 0)  , 1
-        [1]   (26, 26, 10)           , 1
-        [2] Conv2D (3, 3) x 10       , 2
-        [3]   (24, 24, 10)           , 2
+        [0] input
+              (28, 28)
+        [1] Conv2D (3, 3) x 10
+              (26, 26, 10)
+        [2] Conv2D (3, 3) x 10
+              (24, 24, 10)
 
-        :return: [(文字列, 層のインデックス), ...]
+        :return: [層の文字列, ...]
         """
-        str_i_list = list()
+        str_list = list()
 
-        def append(text, layer_index):
-            str_i_list.append((text, layer_index))
+        def append(text):
+            str_list.append(text)
 
-        def append_shape(shape, layer_index):
-            str_i_list.append(("  " + str(shape), layer_index))
+        def add_shape(shape):
+            str_list[-1] += "\n  " + str(shape)
 
-        for i, layer in enumerate(self):
+        for layer in self:
             if isinstance(layer, DenseLayer):
-                append("Dense", i)
-                append_shape(layer.output_shape, i)
+                append("Dense")
+                add_shape(layer.output_shape)
             elif isinstance(layer, ActivationLayer):
-                append("Activation ({})".format(layer.func_name), i)
+                append("Activation ({})".format(layer.func_name))
             elif isinstance(layer, DropoutLayer):
-                append("Dropout ({})".format(layer.r_str), i)
+                append("Dropout ({})".format(layer.r_str))
             elif isinstance(layer, FlattenLayer):
-                append("Flatten", i)
-                append_shape(layer.output_shape, i)
+                append("Flatten")
+                add_shape(layer.output_shape)
             elif isinstance(layer, Conv2dLayer):
                 append("Conv ({}, {}) x {}".format(layer.kernel[0],
                                                    layer.kernel[1],
-                                                   layer.filters),
-                       i)
-                append_shape(layer.output_shape, i)
+                                                   layer.filters))
+                add_shape(layer.output_shape)
             elif isinstance(layer, MaxPool2dLayer):
                 append("MaxPool ({}, {})".format(layer.pool_size[0],
-                                                 layer.pool_size[1]),
-                       i)
-                append_shape(layer.output_shape, i)
+                                                 layer.pool_size[1]))
+                add_shape(layer.output_shape)
             elif isinstance(layer, BatchNormalizationLayer):
-                append("Batch Normalization", i)
+                append("Batch Normalization")
             elif isinstance(layer, InputLayer):
-                append("Input", i)
-                append_shape(layer.output_shape, i)
+                append("Input")
+                add_shape(layer.output_shape)
             elif isinstance(layer, CompileLayer):
-                append("Output (loss_func=cross_entropy)", i)
-                append_shape(layer.output_shape, i)
+                append("Output (loss_func=cross_entropy)")
+                add_shape(layer.output_shape)
             else:
                 append("unknown layer")
-                append_shape(layer.output_shape, i)
+                add_shape(layer.output_shape)
 
-        return str_i_list
+        return str_list
