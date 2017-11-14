@@ -69,6 +69,8 @@ class ModelEditorWidget(QWidget):
         self.load_from_editor_btn.clicked.connect(self.load_from_editor)
         self.reset_editor_model_btn = QPushButton("エディターのモデルを初期化", self)
         self.reset_editor_model_btn.clicked.connect(self.reset_editor_model)
+        self.delete_layer_btn = QPushButton("層を削除", self)
+        self.delete_layer_btn.clicked.connect(self.delete_layer)
         self.layer_editor = LayerEditorTab(self.model_creator, self)
         self.model_display = ModelDisplayWidget(self.model_creator, self)
         self.model_creator.set_changed_notify(self.model_display.update_notify)
@@ -84,6 +86,7 @@ class ModelEditorWidget(QWidget):
         self.reset_editor_model_btn.move(self.width() * 0.1, self.height() * 0.9)
         self.model_display.move(self.width() * 0.6, self.height() * 0.05)
         self.model_display.resize(self.width() * 0.5, self.height() * 0.9)
+        self.delete_layer_btn.move(self.width() * 0.8, 0)
 
     def reset_model(self):
         try:
@@ -115,3 +118,9 @@ class ModelEditorWidget(QWidget):
 
     def reset_editor_model(self):
         self.model_creator.clear()
+
+    def delete_layer(self):
+        try:
+            self.model_creator.delete_last_layer()
+        except RuntimeError as e:
+            print(e)

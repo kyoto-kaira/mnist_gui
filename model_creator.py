@@ -235,6 +235,19 @@ class ModelCreator(object):
         self._add_layer(layer)
         self.is_compiled = True
 
+    def delete_last_layer(self):
+        if len(self.model_structure) <= 1:
+            raise RuntimeError("削除する層がありません。")
+        self.model_structure.pop()
+        last_layer = self.model_structure[-1]
+        self.shape = last_layer.output_shape
+        self.is_last_layer_softmax = False
+        self.is_compiled = False
+        if isinstance(last_layer, ActivationLayer):
+            if last_layer.func_name == "softmax":
+                self.is_last_layer_softmax = True
+        self.call_notify_func()
+
     def get_model(self):
         if not self.is_compiled:
             raise RuntimeError("モデルが正しくありません。モデルを修正してください。")
