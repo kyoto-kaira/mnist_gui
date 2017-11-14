@@ -110,8 +110,10 @@ class MainWindow(QMainWindow):
                           "<p>The <b>MNIST GUI</b> provides hand-drawing tests.")
 
     def createActions(self):
-        self.showAct = QAction("&showImage", self,
-                               triggered=self.showImage)
+        # Windows で表示された画像を閉じようとするとプログラムが終了してしまう。
+        # 解決できるまでコメントアウト
+        # self.showAct = QAction("&showImage", self,
+        #                       triggered=self.showImage)
 
         self.exitAct = QAction("E&xit", self, shortcut="Ctrl+Q",
                                triggered=self.close)
@@ -132,7 +134,7 @@ class MainWindow(QMainWindow):
 
     def createMenus(self):
         fileMenu = QMenu("&File", self)
-        fileMenu.addAction(self.showAct)
+        # fileMenu.addAction(self.showAct)
         fileMenu.addSeparator()
         fileMenu.addAction(self.exitAct)
 
