@@ -17,7 +17,6 @@ class LayerEditorTab(QTabWidget):
         self.model_creator = model_creator
         conv2d_editor = Conv2dEditor(self.model_creator, self)
         max_pool2d_editor = MaxPool2dEditor(self.model_creator, self)
-        flatten_editor = FlattenEditor(self.model_creator, self)
         dense_editor = DenseEditor(self.model_creator, self)
         dropout_editor = DropOutEditor(self.model_creator, self)
         batch_normalization_editor = BatchNormalizationEditor(self.model_creator, self)
@@ -25,7 +24,6 @@ class LayerEditorTab(QTabWidget):
         compile_editor = CompileEditor(self.model_creator, self)
         self.addTab(conv2d_editor, "畳み込み層")
         self.addTab(max_pool2d_editor, "プーリング")
-        self.addTab(flatten_editor, "一次元化層")
         self.addTab(dense_editor, "全結合層")
         self.addTab(dropout_editor, "ドロップアウト")
         self.addTab(batch_normalization_editor, "norm")

@@ -203,6 +203,8 @@ class ModelCreator(object):
         self.call_notify_func()
 
     def add_dense(self, units):
+        if len(self.shape) is not 1:
+            self._add_flatten()
         self._add_layer(DenseLayer(self.shape, units))
 
     def add_activation(self, func_name):
@@ -213,7 +215,7 @@ class ModelCreator(object):
     def add_dropout(self, ratio_str):
         self._add_layer(DropoutLayer(self.shape, ratio_str))
 
-    def add_flatten(self):
+    def _add_flatten(self):
         self._add_layer(FlattenLayer(self.shape))
 
     def add_conv2d(self, filters, kernel_x, kernel_y):
@@ -246,6 +248,8 @@ class ModelCreator(object):
         if isinstance(last_layer, ActivationLayer):
             if last_layer.func_name == "softmax":
                 self.is_last_layer_softmax = True
+        elif isinstance(last_layer, FlattenLayer):
+            self.delete_last_layer()
         self.call_notify_func()
 
     def get_model(self):
@@ -297,8 +301,9 @@ class ModelCreator(object):
             elif isinstance(layer, DropoutLayer):
                 append("Dropout ({})".format(layer.r_str))
             elif isinstance(layer, FlattenLayer):
-                append("Flatten")
-                add_shape(layer.output_shape)
+                # append("Flatten")
+                # add_shape(layer.output_shape)
+                pass
             elif isinstance(layer, Conv2dLayer):
                 append("Conv ({}, {}) x {}".format(layer.kernel[0],
                                                    layer.kernel[1],

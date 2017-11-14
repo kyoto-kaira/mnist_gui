@@ -90,16 +90,6 @@ class DropOutEditor(LayerEditorBase):
             print(e)
 
 
-class FlattenEditor(LayerEditorBase):
-    def __init__(self, model_creator, parent=None):
-        super(FlattenEditor, self).__init__(model_creator, parent)
-
-    def add_layer(self, event):
-        try:
-            self.model_creator.add_flatten()
-        except RuntimeError as e:
-            print(e)
-
 
 class Conv2dEditor(LayerEditorBase):
     def __init__(self, model_creator, parent=None):
