@@ -4,44 +4,38 @@ from PyQt5.QtWidgets import *
 from model_creator import ActivationLayer
 
 
-class LayerEditorBase(QWidget):
-    def __init__(self, model_creator, parent=None):
-        super(LayerEditorBase, self).__init__(parent)
+class LayerEditorBase(QGroupBox):
+    def __init__(self, layer_name, model_creator, parent=None):
+        super(LayerEditorBase, self).__init__(layer_name, parent)
 
-        # 文字の色を白くするパレットを用意
-        self.palette = QPalette()
-        self.palette.setColor(QPalette.WindowText, Qt.white)
+        self.setStyleSheet("QGroupBox {border:1px solid gray; color :gray;}"
+                           "QLabel {color: white;}")
 
         self.model_creator = model_creator
-        self.add_btn = QPushButton("追加", self)
-        self.add_btn.clicked.connect(self.add_layer)
-
-    def resizeEvent(self, event):
-        self.add_btn.move(self.width() * 0.6, self.height() * 0.8)
-        self.additional_resize(event)
-
-    def additional_resize(self, event):
-        pass
-
-    def add_layer(self, event):
-        pass
 
 
 class DenseEditor(LayerEditorBase):
     def __init__(self, model_creator, parent=None):
-        super(DenseEditor, self).__init__(model_creator, parent)
+        super(DenseEditor, self).__init__("Dense", model_creator, parent)
 
         # ユニット数
-        self.label_units = QLabel("units", self)
-        self.label_units.setPalette(self.palette)
-        self.input_units = QSpinBox(self)
+        label_units = QLabel("units")
+        self.input_units = QSpinBox()
         self.input_units.setMinimum(1)
         self.input_units.setMaximum(9999)
         self.input_units.setValue(100)
 
-    def additional_resize(self, event):
-        self.label_units.move(self.width() * 0.1, self.height() * 0.3)
-        self.input_units.move(self.width() * 0.6, self.height() * 0.3)
+        # ボタン
+        add_btn = QPushButton("追加")
+        add_btn.clicked.connect(self.add_layer)
+
+        layout_units = QHBoxLayout()
+        layout_units.addWidget(label_units)
+        layout_units.addWidget(self.input_units)
+        layout = QVBoxLayout()
+        layout.addLayout(layout_units)
+        layout.addWidget(add_btn)
+        self.setLayout(layout)
 
     def add_layer(self, event):
         units = self.input_units.value()
@@ -53,13 +47,20 @@ class DenseEditor(LayerEditorBase):
 
 class ActivationEditor(LayerEditorBase):
     def __init__(self, model_creator, parent=None):
-        super(ActivationEditor, self).__init__(model_creator, parent)
-        self.combo = QComboBox(self)
+        super(ActivationEditor, self).__init__("Activation", model_creator, parent)
+
+        self.combo = QComboBox()
         for func_name in ActivationLayer.get_func_set():
             self.combo.addItem(func_name)
 
-    def additional_resize(self, event):
-        self.combo.move(self.width() * 0.2, self.height() * 0.2)
+        # ボタン
+        add_btn = QPushButton("追加")
+        add_btn.clicked.connect(self.add_layer)
+
+        layout = QVBoxLayout()
+        layout.addWidget(self.combo)
+        layout.addWidget(add_btn)
+        self.setLayout(layout)
 
     def add_layer(self, event):
         try:
@@ -70,18 +71,23 @@ class ActivationEditor(LayerEditorBase):
 
 class DropOutEditor(LayerEditorBase):
     def __init__(self, model_creator, parent=None):
-        super(DropOutEditor, self).__init__(model_creator, parent)
+        super(DropOutEditor, self).__init__("Dropout", model_creator, parent)
 
         # ドロップアウト率
-        self.label_ratio = QLabel("dropout ratio", self)
-        self.label_ratio.setPalette(self.palette)
-        self.input_ratio = QLineEdit(self)
-        self.input_ratio.setValidator(QDoubleValidator(0.0, 1.0, 10))
+        label_ratio = QLabel("dropout ratio")
+        self.input_ratio = QLineEdit()
+        self.input_ratio.setValidator(QDoubleValidator(0.0, 1.0, 5))
         self.input_ratio.setText("0.5")
 
-    def additional_resize(self, event):
-        self.label_ratio.move(self.width() * 0.1, self.height() * 0.3)
-        self.input_ratio.move(self.width() * 0.6, self.height() * 0.3)
+        # ボタン
+        add_btn = QPushButton("追加")
+        add_btn.clicked.connect(self.add_layer)
+
+        layout = QVBoxLayout()
+        layout.addWidget(label_ratio)
+        layout.addWidget(self.input_ratio)
+        layout.addWidget(add_btn)
+        self.setLayout(layout)
 
     def add_layer(self, event):
         try:
@@ -90,42 +96,50 @@ class DropOutEditor(LayerEditorBase):
             print(e)
 
 
-
 class Conv2dEditor(LayerEditorBase):
     def __init__(self, model_creator, parent=None):
-        super(Conv2dEditor, self).__init__(model_creator, parent)
+        super(Conv2dEditor, self).__init__("Conv", model_creator, parent)
 
         # フィルター数
-        self.label_filters = QLabel("filters", self)
-        self.label_filters.setPalette(self.palette)
+        label_filters = QLabel("filters", self)
         self.input_filters = QSpinBox(self)
         self.input_filters.setMinimum(1)
         self.input_filters.setMaximum(9999)
         self.input_filters.setValue(10)
 
         # 横のカーネルサイズ
-        self.label_x = QLabel("x size", self)
-        self.label_x.setPalette(self.palette)
+        label_x = QLabel("x size")
         self.input_x = QSpinBox(self)
         self.input_x.setMinimum(1)
         self.input_x.setMaximum(28)
         self.input_x.setValue(3)
 
         # 縦のカーネルサイズ
-        self.label_y = QLabel("y size", self)
-        self.label_y.setPalette(self.palette)
-        self.input_y = QSpinBox(self)
+        label_y = QLabel("y size")
+        self.input_y = QSpinBox()
         self.input_y.setMinimum(1)
         self.input_y.setMaximum(28)
         self.input_y.setValue(3)
 
-    def additional_resize(self, event):
-        self.label_filters.move(self.width() * 0.1, self.height() * 0.1)
-        self.input_filters.move(self.width() * 0.6, self.height() * 0.1)
-        self.label_x.move(self.width() * 0.1, self.height() * 0.3)
-        self.input_x.move(self.width() * 0.6, self.height() * 0.3)
-        self.label_y.move(self.width() * 0.1, self.height() * 0.4)
-        self.input_y.move(self.width() * 0.6, self.height() * 0.4)
+        # ボタン
+        add_btn = QPushButton("追加")
+        add_btn.clicked.connect(self.add_layer)
+
+        layout_filter = QHBoxLayout()
+        layout_filter.addWidget(label_filters)
+        layout_filter.addWidget(self.input_filters)
+        layout_x = QHBoxLayout()
+        layout_x.addWidget(label_x)
+        layout_x.addWidget(self.input_x)
+        layout_y = QHBoxLayout()
+        layout_y.addWidget(label_y)
+        layout_y.addWidget(self.input_y)
+        layout = QVBoxLayout()
+        layout.addLayout(layout_filter)
+        layout.addLayout(layout_x)
+        layout.addLayout(layout_y)
+        layout.addWidget(add_btn)
+        self.setLayout(layout)
 
     def add_layer(self):
         filters = self.input_filters.value()
@@ -139,29 +153,37 @@ class Conv2dEditor(LayerEditorBase):
 
 class MaxPool2dEditor(LayerEditorBase):
     def __init__(self, model_creator, parent=None):
-        super(MaxPool2dEditor, self).__init__(model_creator, parent)
+        super(MaxPool2dEditor, self).__init__("MaxPool", model_creator, parent)
 
         # 横のプールサイズ
-        self.label_x = QLabel("x size", self)
-        self.label_x.setPalette(self.palette)
-        self.input_x = QSpinBox(self)
+        label_x = QLabel("x size")
+        self.input_x = QSpinBox()
         self.input_x.setMinimum(1)
         self.input_x.setMaximum(28)
         self.input_x.setValue(3)
 
         # 縦のプールサイズ
-        self.label_y = QLabel("y size", self)
-        self.label_y.setPalette(self.palette)
-        self.input_y = QSpinBox(self)
+        label_y = QLabel("y size")
+        self.input_y = QSpinBox()
         self.input_y.setMinimum(1)
         self.input_y.setMaximum(28)
         self.input_y.setValue(3)
 
-    def additional_resize(self, event):
-        self.label_x.move(self.width() * 0.1, self.height() * 0.3)
-        self.input_x.move(self.width() * 0.6, self.height() * 0.3)
-        self.label_y.move(self.width() * 0.1, self.height() * 0.4)
-        self.input_y.move(self.width() * 0.6, self.height() * 0.4)
+        # ボタン
+        add_btn = QPushButton("追加")
+        add_btn.clicked.connect(self.add_layer)
+
+        layout_x = QHBoxLayout()
+        layout_x.addWidget(label_x)
+        layout_x.addWidget(self.input_x)
+        layout_y = QHBoxLayout()
+        layout_y.addWidget(label_y)
+        layout_y.addWidget(self.input_y)
+        layout = QVBoxLayout()
+        layout.addLayout(layout_x)
+        layout.addLayout(layout_y)
+        layout.addWidget(add_btn)
+        self.setLayout(layout)
 
     def add_layer(self):
         pool_x = self.input_x.value()
@@ -174,7 +196,17 @@ class MaxPool2dEditor(LayerEditorBase):
 
 class BatchNormalizationEditor(LayerEditorBase):
     def __init__(self, model_creator, parent=None):
-        super(BatchNormalizationEditor, self).__init__(model_creator, parent)
+        super(BatchNormalizationEditor, self).__init__("Batch Normalization",
+                                                       model_creator,
+                                                       parent)
+
+        # ボタン
+        add_btn = QPushButton("追加")
+        add_btn.clicked.connect(self.add_layer)
+
+        layout = QHBoxLayout()
+        layout.addWidget(add_btn)
+        self.setLayout(layout)
 
     def add_layer(self, event):
         try:
@@ -185,7 +217,28 @@ class BatchNormalizationEditor(LayerEditorBase):
 
 class CompileEditor(LayerEditorBase):
     def __init__(self, model_creator, parent=None):
-        super(CompileEditor, self).__init__(model_creator, parent)
+        super(CompileEditor, self).__init__("Compile",
+                                            model_creator,
+                                            parent)
+
+        # 層を削除するボタン
+        delete_layer_btn = QPushButton("最後の層を削除")
+        delete_layer_btn.clicked.connect(self.delete_layer)
+
+        # ボタン
+        compile_btn = QPushButton("モデルをコンパイル")
+        compile_btn.clicked.connect(self.add_layer)
+
+        layout = QVBoxLayout()
+        layout.addWidget(delete_layer_btn)
+        layout.addWidget(compile_btn)
+        self.setLayout(layout)
+
+    def delete_layer(self, event):
+        try:
+            self.model_creator.delete_last_layer()
+        except RuntimeError as e:
+            print(e)
 
     def add_layer(self, event):
         try:

@@ -41,13 +41,14 @@ class MainWindow(QMainWindow):
         self.createMenus()
 
         self.setWindowTitle("MNIST GUI")
-        self.resize(700, 500)
+        self.setMinimumWidth(800)
+        self.setMinimumHeight(600)
 
         self.model.start()
 
     def resizeEvent(self, event):
-        self.tab.move(self.width() * 0.25, self.height() * 0.05)
-        self.tab.resize(self.width() * 0.7, self.height() * 0.9)
+        self.tab.move(self.width() * 0.2, self.height() * 0.05)
+        self.tab.resize(self.width() * 0.75, self.height() * 0.9)
 
         self.learn_btn.move(self.width() * 0.01, self.height() * 0.3)
         self.stop_btn.move(self.width() * 0.01, self.height() * 0.35)

@@ -8,27 +8,34 @@ from model_creator import *
 default_model_path = './model.hdf5'
 
 
-class LayerEditorTab(QTabWidget):
+class LayerEditorWidget(QWidget):
     """
-    レイヤーの追加を提供する、タブウィジェット
+    レイヤーの追加を提供する、ウィジェット
     """
     def __init__(self, model_creator, parent=None):
-        super(LayerEditorTab, self).__init__(parent)
+        super(LayerEditorWidget, self).__init__(parent)
         self.model_creator = model_creator
-        conv2d_editor = Conv2dEditor(self.model_creator, self)
-        max_pool2d_editor = MaxPool2dEditor(self.model_creator, self)
-        dense_editor = DenseEditor(self.model_creator, self)
-        dropout_editor = DropOutEditor(self.model_creator, self)
-        batch_normalization_editor = BatchNormalizationEditor(self.model_creator, self)
-        activation_editor = ActivationEditor(self.model_creator, self)
-        compile_editor = CompileEditor(self.model_creator, self)
-        self.addTab(conv2d_editor, "畳み込み層")
-        self.addTab(max_pool2d_editor, "プーリング")
-        self.addTab(dense_editor, "全結合層")
-        self.addTab(dropout_editor, "ドロップアウト")
-        self.addTab(batch_normalization_editor, "norm")
-        self.addTab(activation_editor, "活性化関数")
-        self.addTab(compile_editor, "コンパイル")
+        self.conv2d_editor = Conv2dEditor(self.model_creator)
+        self.max_pool2d_editor = MaxPool2dEditor(self.model_creator)
+        self.dense_editor = DenseEditor(self.model_creator)
+        self.dropout_editor = DropOutEditor(self.model_creator)
+        self.batch_normalization_editor = BatchNormalizationEditor(self.model_creator)
+        self.activation_editor = ActivationEditor(self.model_creator)
+        self.compile_editor = CompileEditor(self.model_creator)
+
+        layout_0 = QVBoxLayout()
+        layout_0.addWidget(self.conv2d_editor)
+        layout_0.addWidget(self.max_pool2d_editor)
+        layout_0.addWidget(self.dense_editor)
+        layout_1 = QVBoxLayout()
+        layout_1.addWidget(self.dropout_editor)
+        layout_1.addWidget(self.batch_normalization_editor)
+        layout_1.addWidget(self.activation_editor)
+        layout_1.addWidget(self.compile_editor)
+        layout = QHBoxLayout()
+        layout.addLayout(layout_0)
+        layout.addLayout(layout_1)
+        self.setLayout(layout)
 
 
 class ModelDisplayWidget(QListWidget):
@@ -55,42 +62,30 @@ class ModelEditorWidget(QWidget):
         super(ModelEditorWidget, self).__init__()
         self.model = model
         self.model_creator = ModelCreator()
-        self.reset_model_btn = QPushButton("モデルを初期化", self)
-        self.reset_model_btn.clicked.connect(self.reset_model)
         self.load_defo_btn = QPushButton("学習済みのモデルをロード", self)
         self.load_defo_btn.clicked.connect(self.load_defo)
         self.evaluate_btn = QPushButton("モデルを評価", self)
         self.evaluate_btn.clicked.connect(self.evaluate_model)
-        self.save_btn = QPushButton("モデルを保存", self)
-        self.save_btn.clicked.connect(self.save_model)
         self.load_from_editor_btn = QPushButton("エディターからモデルをロード", self)
         self.load_from_editor_btn.clicked.connect(self.load_from_editor)
         self.reset_editor_model_btn = QPushButton("エディターのモデルを初期化", self)
         self.reset_editor_model_btn.clicked.connect(self.reset_editor_model)
-        self.delete_layer_btn = QPushButton("層を削除", self)
-        self.delete_layer_btn.clicked.connect(self.delete_layer)
-        self.layer_editor = LayerEditorTab(self.model_creator, self)
+        self.layer_editor = LayerEditorWidget(self.model_creator, self)
         self.model_display = ModelDisplayWidget(self.model_creator, self)
         self.model_creator.set_changed_notify(self.model_display.update_notify)
 
-    def resizeEvent(self, event):
-        self.reset_model_btn.move(self.width() * 0.1, self.height() * 0.05)
-        self.load_defo_btn.move(self.width() * 0.1, self.height() * 0.1)
-        self.evaluate_btn.move(self.width() * 0.1, self.height() * 0.15)
-        self.save_btn.move(self.width() * 0.1, self.height() * 0.2)
-        self.layer_editor.move(self.width() * 0.1, self.height() * 0.3)
-        self.layer_editor.resize(self.width() * 0.5, self.height() * 0.5)
-        self.load_from_editor_btn.move(self.width() * 0.1, self.height() * 0.8)
-        self.reset_editor_model_btn.move(self.width() * 0.1, self.height() * 0.9)
-        self.model_display.move(self.width() * 0.6, self.height() * 0.05)
-        self.model_display.resize(self.width() * 0.5, self.height() * 0.9)
-        self.delete_layer_btn.move(self.width() * 0.8, 0)
+        self.layer_editor.move(0, 0)
+        self.layer_editor.setFixedSize(350, 500)
 
-    def reset_model(self):
-        try:
-            self.model.set_model()
-        except RuntimeError as e:
-            print(e)
+    def resizeEvent(self, event):
+        self.load_defo_btn.move(self.width() * 0.6, self.height() * 0.1)
+        self.evaluate_btn.move(self.width() * 0.6, self.height() * 0.15)
+
+        self.reset_editor_model_btn.move(356, self.height() * 0.35)
+        self.load_from_editor_btn.move(356, self.height() * 0.4)
+
+        self.model_display.move(356, self.height() * 0.5)
+        self.model_display.resize(200, self.height() * 0.5)
 
     def load_defo(self):
         try:
@@ -101,12 +96,6 @@ class ModelEditorWidget(QWidget):
     def evaluate_model(self):
         print(self.model.report_evaluation())
 
-    def save_model(self):
-        try:
-            self.model.save(default_model_path)
-        except RuntimeError as e:
-            print(e)
-
     def load_from_editor(self):
         try:
             model = self.model_creator.get_model()
@@ -116,9 +105,3 @@ class ModelEditorWidget(QWidget):
 
     def reset_editor_model(self):
         self.model_creator.clear()
-
-    def delete_layer(self):
-        try:
-            self.model_creator.delete_last_layer()
-        except RuntimeError as e:
-            print(e)
