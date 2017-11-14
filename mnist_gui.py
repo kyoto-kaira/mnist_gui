@@ -1,4 +1,5 @@
-from PyQt5.QtCore import QDir
+from PyQt5.QtCore import QDir, Qt
+from PyQt5.QtGui import QPalette
 from PyQt5.QtWidgets import *
 
 from mnist_model import MnistModel
@@ -8,6 +9,21 @@ from one_line_info import global_one_line_info
 
 appStyle = """
 QMainWindow{
+background-color: #333333;
+}
+QTabWidget::pane, QTabBar::tab:selected
+{
+color: #aaaaaa;
+background-color: #2a2a2a;
+}
+QTabBar::tab:!selected
+{
+color: #aaaaaa;
+background-color: #666666;
+}
+QStatusBar
+{
+color: #aaaaaa;
 background-color: #333333;
 }
 """
@@ -135,7 +151,7 @@ class MainWindow(QMainWindow):
         self.menuBar().addMenu(helpMenu)
 
     def exitWarn(self):
-        ret = QMessageBox.warning(self, "MNIST GUID",
+        ret = QMessageBox.warning(self, "MNIST GUI",
                                   "Are you sure to exit?",
                                   QMessageBox.Ok | QMessageBox.Cancel)
         if ret == QMessageBox.Ok:

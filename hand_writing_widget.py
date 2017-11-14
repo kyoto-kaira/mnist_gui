@@ -1,5 +1,5 @@
-from PyQt5.QtCore import QDir, QPoint, QRect, QSize, Qt
-from PyQt5.QtGui import QImage, QPainter, QPen, qRgb, QBrush
+from PyQt5.QtCore import *
+from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 
 import numpy as np
@@ -148,13 +148,18 @@ class HandWritingWidget(QWidget):
         self.reset_btn = QPushButton("リセット (Space)", self)
         self.reset_btn.clicked.connect(self.reset_screen)
 
+        palette = QPalette()
+        palette.setColor(QPalette.Window, QColor(0x2a, 0x2a, 0x2a))
+        self.setPalette(palette)
+        self.setAutoFillBackground(True)
+
     def resizeEvent(self, event):
-        self.reset_btn.move(self.width() * 0.01, self.height() * 0.01)
+        self.reset_btn.move(self.width() * 0.05, self.height() * 0.025)
 
-        self.scribbleArea.move(self.width() * 0.01, self.height() * 0.1)
-        self.scribbleArea.resize(self.width() * 0.7, self.width() * 0.7)
+        self.scribbleArea.move(self.width() * 0.05, self.height() * 0.1)
+        self.scribbleArea.resize(self.width() * 0.575, self.width() * 0.575)
 
-        self.barGraph.move(self.width() * 0.75, self.height() * 0.1)
+        self.barGraph.move(self.width() * 0.65, self.height() * 0.1)
         self.barGraph.resize(200, 220)
 
         # 描画スペースのサイズに合わせて、ペンのサイズを自動設定

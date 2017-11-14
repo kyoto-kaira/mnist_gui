@@ -76,6 +76,11 @@ class ModelEditorWidget(QWidget):
         self.model_creator.set_changed_notify(self.model_display.update_notify)
         self.reset_editor_model()
 
+        palette = QPalette()
+        palette.setColor(QPalette.Window, QColor(0x2a, 0x2a, 0x2a))
+        self.setPalette(palette)
+        self.setAutoFillBackground(True)
+
         self.layer_editor.move(0, 0)
         self.layer_editor.setFixedSize(350, 500)
 
@@ -87,7 +92,7 @@ class ModelEditorWidget(QWidget):
         self.load_from_editor_btn.move(356, self.height() * 0.4)
 
         self.model_display.move(356, self.height() * 0.5)
-        self.model_display.resize(200, self.height() * 0.5)
+        self.model_display.resize(200, self.height() * 0.45)
 
     def load_defo(self):
         try:
