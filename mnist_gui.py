@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import *
 from mnist_model import MnistModel
 from hand_writing_widget import HandWritingWidget
 from model_editor_widet import ModelEditorWidget
-
+from one_line_info import global_one_line_info
 
 appStyle = """
 QMainWindow{
@@ -39,6 +39,7 @@ class MainWindow(QMainWindow):
 
         self.createActions()
         self.createMenus()
+        global_one_line_info.set_destination(self.statusBar().showMessage)
 
         self.setWindowTitle("MNIST GUI")
         self.setMinimumWidth(800)

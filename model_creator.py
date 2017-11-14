@@ -2,7 +2,7 @@ from keras.models import Sequential
 from keras.layers import Dense, Activation, Dropout, Flatten
 from keras.layers import Conv2D, MaxPool2D
 from keras.layers import BatchNormalization
-
+from one_line_info import global_one_line_info
 
 class LayerBase:
     def __init__(self):
@@ -233,7 +233,9 @@ class ModelCreator(object):
         layer = CompileLayer(self.shape)
         if not self.is_last_layer_softmax:
             self.add_activation("softmax")
-            print("最終層に softmax の層を追加しました。")
+            global_one_line_info.send("最終層に softmax の層を追加しました。コンパイルしました。")
+        else:
+            global_one_line_info.send("コンパイルしました。")
         self._add_layer(layer)
         self.is_compiled = True
 
@@ -254,7 +256,7 @@ class ModelCreator(object):
 
     def get_model(self):
         if not self.is_compiled:
-            raise RuntimeError("モデルが正しくありません。モデルを修正してください。")
+            raise RuntimeError("モデルがコンパイルされていません。")
         code = ""
         for layer in self.model_structure:
             code += layer.get_code()

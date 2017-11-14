@@ -2,6 +2,7 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from model_creator import ActivationLayer
+from one_line_info import global_one_line_info
 
 
 class LayerEditorBase(QGroupBox):
@@ -42,7 +43,7 @@ class DenseEditor(LayerEditorBase):
         try:
             self.model_creator.add_dense(units)
         except RuntimeError as e:
-            print(e)
+            global_one_line_info.send(str(e))
 
 
 class ActivationEditor(LayerEditorBase):
@@ -66,7 +67,7 @@ class ActivationEditor(LayerEditorBase):
         try:
             self.model_creator.add_activation(self.combo.currentText())
         except RuntimeError as e:
-            print(e)
+            global_one_line_info.send(str(e))
 
 
 class DropOutEditor(LayerEditorBase):
@@ -93,7 +94,7 @@ class DropOutEditor(LayerEditorBase):
         try:
             self.model_creator.add_dropout(self.input_ratio.text())
         except RuntimeError as e:
-            print(e)
+            global_one_line_info.send(str(e))
 
 
 class Conv2dEditor(LayerEditorBase):
@@ -148,7 +149,7 @@ class Conv2dEditor(LayerEditorBase):
         try:
             self.model_creator.add_conv2d(filters, kernel_x, kernel_y)
         except RuntimeError as e:
-            print(e)
+            global_one_line_info.send(str(e))
 
 
 class MaxPool2dEditor(LayerEditorBase):
@@ -191,7 +192,7 @@ class MaxPool2dEditor(LayerEditorBase):
         try:
             self.model_creator.add_max_pool2d(pool_x, pool_y)
         except RuntimeError as e:
-            print(e)
+            global_one_line_info.send(str(e))
 
 
 class BatchNormalizationEditor(LayerEditorBase):
@@ -212,7 +213,7 @@ class BatchNormalizationEditor(LayerEditorBase):
         try:
             self.model_creator.add_batch_normalization()
         except RuntimeError as e:
-            print(e)
+            global_one_line_info.send(str(e))
 
 
 class CompileEditor(LayerEditorBase):
@@ -238,10 +239,10 @@ class CompileEditor(LayerEditorBase):
         try:
             self.model_creator.delete_last_layer()
         except RuntimeError as e:
-            print(e)
+            global_one_line_info.send(str(e))
 
     def add_layer(self, event):
         try:
             self.model_creator.add_compile()
         except RuntimeError as e:
-            print(e)
+            global_one_line_info.send(str(e))

@@ -4,6 +4,7 @@ from PyQt5.QtWidgets import *
 
 from layer_editor_widgets import *
 from model_creator import *
+from one_line_info import global_one_line_info
 
 default_model_path = './model.hdf5'
 
@@ -73,6 +74,7 @@ class ModelEditorWidget(QWidget):
         self.layer_editor = LayerEditorWidget(self.model_creator, self)
         self.model_display = ModelDisplayWidget(self.model_creator, self)
         self.model_creator.set_changed_notify(self.model_display.update_notify)
+        self.reset_editor_model()
 
         self.layer_editor.move(0, 0)
         self.layer_editor.setFixedSize(350, 500)
@@ -91,17 +93,17 @@ class ModelEditorWidget(QWidget):
         try:
             self.model.load(default_model_path)
         except RuntimeError as e:
-            print(e)
+            global_one_line_info.send(str(e))
 
     def evaluate_model(self):
-        print(self.model.report_evaluation())
+        global_one_line_info.send(str(self.model.report_evaluation()))
 
     def load_from_editor(self):
         try:
             model = self.model_creator.get_model()
             self.model.set_model(model)
         except RuntimeError as e:
-            print(e)
+            global_one_line_info.send(str(e))
 
     def reset_editor_model(self):
         self.model_creator.clear()
