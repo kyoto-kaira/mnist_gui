@@ -145,7 +145,7 @@ class HandWritingWidget(QWidget):
 
         self.barGraph = BarGraph(self)
         self.scribbleArea = ScribbleArea(self.barGraph, model, parent=self)
-        self.reset_btn = QPushButton("リセット (Space)", self)
+        self.reset_btn = QPushButton("画面をクリア (Space)", self)
         self.reset_btn.clicked.connect(self.reset_screen)
 
         palette = QPalette()
