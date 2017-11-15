@@ -5,25 +5,38 @@ from PyQt5.QtWidgets import *
 from mnist_model import MnistModel
 from hand_writing_widget import HandWritingWidget
 from model_editor_widet import ModelEditorWidget
+from ranking_widget import RankingWidget
 from one_line_info import global_one_line_info
 
 appStyle = """
-QMainWindow{
+QMainWindow {
 background-color: #333333;
 }
-QTabWidget::pane, QTabBar::tab:selected
-{
+QTabWidget::pane {
 color: #aaaaaa;
 background-color: #2a2a2a;
 }
-QTabBar::tab:!selected
-{
+QTabBar::tab:selected {
+border-color: #2a2a2a;
+border-style: solid;
+border-width: 1px 1px 0px 1px;
+padding:10px;
+color: #aaaaaa;
+background-color: #2a2a2a;
+}
+QTabBar::tab:!selected {
+border-color: grey;
+border-style: solid;
+border-width: 0px 1px 0px 0px;
+padding:10px;
 color: #aaaaaa;
 background-color: #666666;
 }
-QStatusBar
-{
+QStatusBar {
 color: #aaaaaa;
+background-color: #333333;
+}
+#rankingWidget {
 background-color: #333333;
 }
 """
@@ -42,9 +55,11 @@ class MainWindow(QMainWindow):
 
         self.HandWriting = HandWritingWidget(self.model, self)
         self.ModelEditor = ModelEditorWidget(self.model, self)
+        self.Ranking = RankingWidget(self.model, self)
         self.tab = QTabWidget(self)
         self.tab.addTab(self.HandWriting, "Hand Writing")
         self.tab.addTab(self.ModelEditor, "Model Editor")
+        self.tab.addTab(self.Ranking, "Ranking")
 
         self.model.set_update_bar_func(self.HandWriting.scribbleArea.outputAcc)
 
