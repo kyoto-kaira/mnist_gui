@@ -105,8 +105,11 @@ class ModelEditorWidget(QWidget):
 
     def load_from_editor(self):
         try:
-            model = self.model_creator.get_model()
-            self.model.set_model(model)
+            if self.model.is_learning():
+                raise RuntimeError("学習中です。")
+            else:
+                model = self.model_creator.get_model()
+                self.model.set_model(model)
         except RuntimeError as e:
             global_one_line_info.send(str(e))
 

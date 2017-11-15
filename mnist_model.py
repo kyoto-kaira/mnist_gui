@@ -119,6 +119,9 @@ class MnistModel(threading.Thread):
             if self._exit:
                 break
 
+    def is_learning(self):
+        return self._is_learning
+
     def stop_learning(self):
         self.model.stop_training = True
 
