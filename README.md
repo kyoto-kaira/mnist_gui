@@ -22,6 +22,7 @@ python mnist_gui.py
   (ニューラルネットワークのライブラリとして利用。keras で利用できるものであれば他の物でもよい。)
 - keras (tensorflow のラッパーとして利用。
   "image_data_format": "channels_last" のみに対応。)
+- scikit-learn (学習データの作成。モデルの評価に利用。)
 - h5py (モデルの保存、読み込みに利用)
 - PyQt5 (GUI のライブラリ)
 
