@@ -18,8 +18,8 @@ class BarGraph(QWidget):
         dirty_rect = event.rect()
         painter.setBrush(Qt.white)
         painter.drawRect(dirty_rect)
-        painter.setPen(Qt.red)
-        painter.setBrush(QBrush(Qt.darkBlue))
+        painter.setPen(Qt.black)
+        painter.setBrush(QBrush(Qt.green))
         y_step = 20
         for i, v in enumerate(self.values):
             painter.drawRect(15, y_step * i + 20, 100 * v, 5)
