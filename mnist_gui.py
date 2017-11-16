@@ -48,6 +48,17 @@ color:#fff;
 background-color:#49a9d4;
 border-radius:12px;
 }
+QPushButton:hover{
+width:150px;
+height:30px;
+font-size:12px;
+text-decoration:none;
+text-align:center;
+padding: 1px 5 1px;
+color:#fff;
+background-color:#0075A9;
+border-radius:12px;
+}
 #rankingWidget {
 background-color: #333333;
 }
