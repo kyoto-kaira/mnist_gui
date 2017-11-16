@@ -10,7 +10,7 @@ from keras.layers.core import Dense, Activation, Flatten, Dropout
 from keras.layers.convolutional import Convolution2D, MaxPooling2D
 from keras.layers.normalization import BatchNormalization
 from keras.optimizers import SGD, Adam
-from keras.models import load_model
+from keras.models import load_model, model_from_json
 from keras.callbacks import LambdaCallback
 
 import sklearn.metrics
@@ -40,7 +40,17 @@ class MnistModel(threading.Thread):
 
         self.model = None
         try:
-            self.load(default_model_path)
+            # self.load(default_model_path)
+
+            # load json and create model
+            json_file = open('model.json', 'r')
+            loaded_model_json = json_file.read()
+            json_file.close()
+            loaded_model = model_from_json(loaded_model_json)
+            # load weights into new model
+            loaded_model.load_weights("model.h5")
+            self.model = loaded_model
+            print("Loaded model from disk")
         except:
             self.set_model()
         self.graph = tf.get_default_graph()
@@ -169,6 +179,12 @@ class MnistModel(threading.Thread):
             self.model.compile(loss='categorical_crossentropy',
                                optimizer=Adam(lr=0.01),
                                metrics=['accuracy'])
+            # serialize model to JSON
+            model_json = self.model.to_json()
+            with open("model.json", "w") as json_file:
+                json_file.write(model_json)
+            # serialize weights to HDF5
+            self.model.save_weights("model.h5")
             self.model_creator = None
         else:
             self.model = model
