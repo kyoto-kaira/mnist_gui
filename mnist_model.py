@@ -51,6 +51,16 @@ class MnistModel(threading.Thread):
             loaded_model.load_weights("model.h5")
             self.model = loaded_model
             print("Loaded model from disk")
+
+            """
+            # serialize model to JSON
+            model_json = self.model.to_json()
+            with open("model.json", "w") as json_file:
+                json_file.write(model_json)
+            # serialize weights to HDF5
+            self.model.save_weights("model.h5")
+            """
+            self.model_creator = None
         except:
             self.set_model()
         self.graph = tf.get_default_graph()
