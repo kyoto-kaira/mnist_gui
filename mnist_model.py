@@ -50,6 +50,9 @@ class MnistModel(threading.Thread):
             # load weights into new model
             loaded_model.load_weights("model.h5")
             self.model = loaded_model
+            self.model.compile(loss='categorical_crossentropy',
+                               optimizer=Adam(lr=0.01),
+                               metrics=['accuracy'])
             print("Loaded model from disk")
 
             """
