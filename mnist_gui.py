@@ -39,10 +39,11 @@ background-color: #333333;
 }
 QPushButton{
 width:150px;
+height:30px;
 font-size:12px;
 text-decoration:none;
 text-align:center;
-padding: 5px 10 5px;
+padding: 1px 5 1px;
 color:#fff;
 background-color:#49a9d4;
 border-radius:12px;
@@ -50,6 +51,7 @@ border-radius:12px;
 #rankingWidget {
 background-color: #333333;
 }
+
 """
 
 

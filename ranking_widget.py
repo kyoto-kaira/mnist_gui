@@ -6,6 +6,7 @@ import datetime
 import pickle
 from one_line_info import *
 
+
 class RankingData:
     def __init__(self):
         try:
@@ -69,6 +70,7 @@ class RankingRegisterDialog(QDialog):
         layout_score.addWidget(self.label_score_value)
 
         register_btn = QPushButton("ランキングに登録")
+        
         register_btn.clicked.connect(self.register)
 
         layout = QVBoxLayout()
@@ -77,7 +79,7 @@ class RankingRegisterDialog(QDialog):
         layout.addWidget(register_btn)
 
         self.setLayout(layout)
-        self.setFixedSize(300, 100)
+        self.setFixedSize(300, 200)
 
         self.mnist_model = mnist_model
         self.register_func = None
