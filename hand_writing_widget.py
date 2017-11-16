@@ -6,6 +6,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
+
+
 class BarGraph(QWidget):
     def __init__(self, parent=None):
         super(BarGraph, self).__init__(parent)
@@ -44,6 +46,8 @@ class ScribbleArea(QWidget):
         self.lastPoint = QPoint()
         self.barOutput = bar_output
         self.model = model
+
+
 
     def getProcessedImage(self):
         self.resizeImage(self.image, self.size())
@@ -152,8 +156,12 @@ class HandWritingWidget(QWidget):
         palette.setColor(QPalette.Window, QColor(0x2a, 0x2a, 0x2a))
         self.setPalette(palette)
         self.setAutoFillBackground(True)
+        self.lbl = QLabel(self)
 
     def resizeEvent(self, event):
+        self.initUI(self.width(), self.height())
+        self.lbl.setVisible = False
+        self.initUI(self.width(), self.height())
         self.reset_btn.move(self.width() * 0.05, self.height() * 0.025)
 
         self.scribbleArea.move(self.width() * 0.05, self.height() * 0.1)
@@ -164,6 +172,16 @@ class HandWritingWidget(QWidget):
 
         # 描画スペースのサイズに合わせて、ペンのサイズを自動設定
         self.scribbleArea.setPenWidth(self.width() * 0.7 / 7)
+
+    def initUI(self, width, height):
+        # QPixmapオブジェクト作成
+        pixmap = QPixmap("./logo.png")
+
+        # ラベルを作ってその中に画像を置く
+        self.lbl.setPixmap(pixmap)
+        self.lbl.move(width - 400, height - 133)
+        self.lbl.show()
+
 
     def reset_screen(self, event):
         self.scribbleArea.clearImage()

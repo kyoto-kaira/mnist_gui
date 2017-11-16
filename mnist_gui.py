@@ -1,11 +1,12 @@
 from PyQt5.QtCore import QDir, Qt
-from PyQt5.QtGui import QPalette
+from PyQt5.QtGui import QPalette, QPixmap
 from PyQt5.QtWidgets import *
 
 from mnist_model import MnistModel
 from hand_writing_widget import HandWritingWidget
 from model_editor_widet import ModelEditorWidget
 from one_line_info import global_one_line_info
+
 
 appStyle = """
 QMainWindow{
@@ -62,6 +63,9 @@ class MainWindow(QMainWindow):
         self.setMinimumHeight(600)
 
         self.model.start()
+        #self.initUI(self.width, self.height)
+
+
 
     def resizeEvent(self, event):
         self.tab.move(self.width() * 0.2, self.height() * 0.05)
