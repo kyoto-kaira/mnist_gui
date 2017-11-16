@@ -4,37 +4,53 @@ from PyQt5.QtWidgets import *
 import threading
 import datetime
 import pickle
-
-from model_creator import ModelCreator
-
+from one_line_info import *
 
 class RankingData:
     def __init__(self):
         try:
-            f = open("./ranking.pickle", "rb")
+            f = open("./ranking_data/ranking.pickle", "rb")
             self._data = pickle.load(f)
         except:
             self._data = list()
 
-    def insert(self, name):
+        self.update_notify_func = None
+
+    def insert(self, name: str, f1_score: float, mnist_model):
         item = dict()
+        d = datetime.datetime.today()
+        model_file_name = "./ranking_data/"\
+                          + name + "_"\
+                          + d.strftime("%Y-%m-%d_%H-%M-%S")\
+                          + ".hdf5"
         item.update({"name": name,
-                     "model_creator": None,
-                     "f1-score": None,
-                     "model_file_name": None,
-                     "password": None})
+                     "f1-score": f1_score,
+                     "model_file_name": model_file_name,
+                     "model_creator": mnist_model.model_creator,
+                     })
         self._data.append(item)
         print(self._data)
 
-        d = datetime.datetime.today()
-        print(name + "_" + d.strftime("%Y-%m-%d_%H-%M-%S"))
+        if self.update_notify_func is not None:
+            self.update_notify_func()
 
-        with open("./ranking.pickle", "wb") as f:
+        try:
+            mnist_model.save(model_file_name)
+        except:
+            print(model_file_name + "は保存されませんでした。")
+
+        with open("./ranking_data/ranking.pickle", "wb") as f:
             pickle.dump(self._data, f)
+
+    def get_sorted_data(self):
+        return sorted(self._data, key=lambda item: - item['f1-score'])
+
+    def set_update_notify_func(self, func):
+        self.update_notify_func = func
 
 
 class RankingRegisterDialog(QDialog):
-    def __init__(self, parent=None):
+    def __init__(self, mnist_model, parent=None):
         super(RankingRegisterDialog, self).__init__(parent)
         self.setWindowTitle("登録")
 
@@ -47,7 +63,7 @@ class RankingRegisterDialog(QDialog):
         layout_name.addWidget(self.input_name)
 
         label_score = QLabel("スコア")
-        self.label_score_value = QLabel("0.99")
+        self.label_score_value = QLabel("")
         layout_score = QHBoxLayout()
         layout_score.addWidget(label_score)
         layout_score.addWidget(self.label_score_value)
@@ -63,19 +79,28 @@ class RankingRegisterDialog(QDialog):
         self.setLayout(layout)
         self.setFixedSize(300, 100)
 
+        self.mnist_model = mnist_model
         self.register_func = None
 
+        self.score_calculated = False
+        self.score = 0.0
+
     def show_dialog(self):
+        if self.mnist_model.model_creator is None:
+            global_one_line_info.send("エディターで作られたモデルではありません。")
+            return
         self.input_name.setText("")
         self.label_score_value.setText("計算中...")
+        self.score_calculated = False
         self.show()
         tr = threading.Thread(target=self._calc_score)
         tr.start()
 
     def _calc_score(self):
-        import time
-        time.sleep(1)
-        self.label_score_value.setText("0.99")
+        score = self.mnist_model.report_evaluation()
+        self.label_score_value.setText(str(score))
+        self.score = score
+        self.score_calculated = True
 
     def register(self):
         name = self.input_name.text()
@@ -84,8 +109,18 @@ class RankingRegisterDialog(QDialog):
                                 "名前を入力してください",
                                 QMessageBox.Ok)
             return
+        if not self.score_calculated:
+            QMessageBox.warning(self, "メッセージ",
+                                "スコアを計算中です",
+                                QMessageBox.Ok)
+            return
+        if self.mnist_model.model_creator is None:
+            QMessageBox.warning(self, "メッセージ",
+                                "エディターで作られたモデルではありません。",
+                                QMessageBox.Ok)
+            return
         if self.register_func is not None:
-            self.register_func(name)
+            self.register_func(name, self.score, self.mnist_model)
         else:
             print(name)
         self.close()
@@ -95,7 +130,7 @@ class RankingRegisterDialog(QDialog):
 
 
 class RankingWidget(QWidget):
-    def __init__(self, model, parent=None):
+    def __init__(self, mnist_model, parent=None):
         super(RankingWidget, self).__init__()
 
         self.ranking_data = RankingData()
@@ -105,7 +140,7 @@ class RankingWidget(QWidget):
         self.setPalette(palette)
         self.setAutoFillBackground(True)
 
-        self.register_dialog = RankingRegisterDialog(self)
+        self.register_dialog = RankingRegisterDialog(mnist_model, self)
         self.register_dialog.set_register_func(self.ranking_data.insert)
 
         self.register_btn = QPushButton("登録", self)
@@ -114,15 +149,23 @@ class RankingWidget(QWidget):
         self.ranking_table = QTableWidget(self)
         self.ranking_table.setColumnCount(2)
         self.ranking_table.setHorizontalHeaderLabels(["名前", "スコア"])
-        self.ranking_table.setRowCount(1000)
-        for i in range(1000):
-            item_name = QTableWidgetItem("名前" + str(i))
-            item_score = QTableWidgetItem("0.99")
-            self.ranking_table.setItem(i, 0, item_name)
-            self.ranking_table.setItem(i, 1, item_score)
+
+        self.update_ranking()
+        self.ranking_data.set_update_notify_func(self.update_ranking)
 
     def resizeEvent(self, QResizeEvent):
         self.register_btn.move(self.width() * 0.1, self.height() * 0.1)
 
         self.ranking_table.move(self.width() * 0.3, self.height() * 0.1)
         self.ranking_table.resize(self.width() * 0.6, self.height() * 0.8)
+
+    def update_ranking(self):
+        ranking = self.ranking_data.get_sorted_data()
+        self.ranking_table.setRowCount(len(ranking))
+        for i, item in enumerate(ranking):
+            item_name = QTableWidgetItem(item['name'])
+            item_name.setFlags(Qt.ItemIsEnabled)
+            item_score = QTableWidgetItem(str(item['f1-score']))
+            item_score.setFlags(Qt.ItemIsEnabled)
+            self.ranking_table.setItem(i, 0, item_name)
+            self.ranking_table.setItem(i, 1, item_score)
