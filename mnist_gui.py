@@ -27,6 +27,16 @@ QStatusBar
 color: #aaaaaa;
 background-color: #333333;
 }
+QPushButton{
+width:200px;
+font-size:18px;
+text-decoration:none;
+text-align:center;
+padding: 5px 10 5px;
+color:#fff;
+background-color:#49a9d4;
+border-radius:15px;
+}
 """
 
 
