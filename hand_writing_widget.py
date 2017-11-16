@@ -51,14 +51,45 @@ class ScribbleArea(QWidget):
 
     def getProcessedImage(self):
         self.resizeImage(self.image, self.size())
-        scaled_image = self.image.smoothScaled(28, 28)
-        height = scaled_image.height()
-        width = scaled_image.width()
-        image_array = np.zeros((height, width))
-        for y in range(height):
-            for x in range(width):
-                image_array[y][x] = 255 - scaled_image.pixelColor(x, y).lightness()
-        return image_array.reshape((1, 28, 28, 1))
+        scaledImage = self.image.smoothScaled(28, 28)
+        height = scaledImage.height()
+        width = scaledImage.width()
+        blackset1 = []
+        blackset2 = []
+        imageArray = np.zeros((height, width))
+        for i in range(height):
+            for j in range(width):
+                imageArray[i][j] = 255 - scaledImage.pixelColor(j, i).lightness()
+                if imageArray[i][j] >= 254:
+                    blackset1.append(j)
+                    blackset2.append(i)
+        if (len(blackset1) is not 0) or (len(blackset2) is not 0):
+            T1 = (max(blackset1) + min(blackset1)) / 2
+            T2 = (max(blackset2) + min(blackset2)) / 2
+        else:
+            T1 = 0
+            T2 = 0
+        for y in range(28):
+            for x in range(28):
+                imageArray[y][x] = 255 - scaledImage.pixelColor(x - (14 - T1), y - (14 - T2)).lightness()
+        if 14 - int(T1) >= 0:
+            for p in range(28):
+                for q in range(14 - int(T1)):
+                    imageArray[p][q] = 0  # 縦塗りつぶし
+        elif 14 - int(T1) < 0:
+            for a in range(28):
+                for b in range(28 - (int(T1) - 14), 28):
+
+                    imageArray[a][b] = 0  # 縦塗りつぶし
+        if 14 - int(T2) >= 0:
+            for u in range(14 - int(T2)):
+                for w in range(28):
+                    imageArray[u][w] = 0  # 横塗りつぶし
+        elif 14 - int(T2) < 0:
+            for c in range(28 - (int(T2) - 14), 28):
+                for d in range(28):
+                    imageArray[c][d] = 0  # 横塗りつぶし 
+        return imageArray.reshape((1, 28, 28, 1))
 
     def outputAcc(self):
         image_array = self.getProcessedImage()
