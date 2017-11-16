@@ -109,7 +109,7 @@ class ModelEditorWidget(QWidget):
                 raise RuntimeError("学習中です。")
             else:
                 model = self.model_creator.get_model()
-                self.model.set_model(model)
+                self.model.set_model(model, self.model_creator)
         except RuntimeError as e:
             global_one_line_info.send(str(e))
 

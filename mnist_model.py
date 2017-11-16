@@ -2,6 +2,7 @@ from PyQt5.QtGui import QTextCursor
 
 import numpy as np
 import threading
+import copy
 import tensorflow as tf
 
 from keras.models import Sequential
@@ -45,6 +46,7 @@ class MnistModel(threading.Thread):
         self.graph = tf.get_default_graph()
 
         self.update_bar_func = None
+        self.model_creator = None
 
     def _set_train_and_test_data(self):
         np.random.seed(0)
@@ -64,6 +66,7 @@ class MnistModel(threading.Thread):
             raise RuntimeError("学習中なのでモデルのロードはできません。")
         else:
             self.model = load_model(path)
+        self.model_creator = None
 
     def save(self, path):
         if self._is_learning:
@@ -137,7 +140,7 @@ class MnistModel(threading.Thread):
             return
         return self.model.predict(image).reshape(10)
 
-    def set_model(self, model=None):
+    def set_model(self, model=None, model_creator=None):
         if self._is_learning:
             raise RuntimeError("学習中なので、モデルの設定はできません。")
         if model is None:
@@ -166,13 +169,15 @@ class MnistModel(threading.Thread):
             self.model.compile(loss='categorical_crossentropy',
                                optimizer=Adam(lr=0.01),
                                metrics=['accuracy'])
-            self.model.summary()
+            self.model_creator = None
         else:
             self.model = model
+            self.model_creator = copy.copy(model_creator)
 
     def report_evaluation(self):
-        y = self.model.predict(self.X_test)
-        y_pred = [np.argmax(onehot) for onehot in y]
-        y_true = [np.argmax(onehot) for onehot in self.Y_test]
-        # return sklearn.metrics.classification_report(y_true, y_pred)
-        return float(sklearn.metrics.f1_score(y_true, y_pred, average='weighted'))
+        with self.graph.as_default():
+            y = self.model.predict(self.X_test)
+            y_pred = [np.argmax(onehot) for onehot in y]
+            y_true = [np.argmax(onehot) for onehot in self.Y_test]
+            # return sklearn.metrics.classification_report(y_true, y_pred)
+            return float(sklearn.metrics.f1_score(y_true, y_pred, average='weighted'))
