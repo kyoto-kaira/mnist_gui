@@ -39,7 +39,7 @@ background-color: #333333;
 }
 QPushButton{
 width:200px;
-font-size:18px;
+font-size:12px;
 text-decoration:none;
 text-align:center;
 padding: 5px 10 5px;
