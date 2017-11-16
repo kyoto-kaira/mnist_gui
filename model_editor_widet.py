@@ -82,7 +82,7 @@ class ModelEditorWidget(QWidget):
         self.setAutoFillBackground(True)
 
         self.layer_editor.move(0, 0)
-        self.layer_editor.setFixedSize(350, 500)
+        self.layer_editor.setFixedSize(350, 600)
 
     def resizeEvent(self, event):
         self.load_defo_btn.move(self.width() * 0.6, self.height() * 0.1)
