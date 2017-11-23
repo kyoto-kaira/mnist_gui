@@ -99,13 +99,13 @@ class MnistModel(threading.Thread):
                 self.logger.append(str("{}/{} {:.4f}".format(epoch + 1,
                                                              num_batch,
                                                              logs['acc'])))
-                self.logger.moveCursor(QTextCursor.End)
+                # self.logger.moveCursor(QTextCursor.End)
                 if self.update_bar_func is not None:
                     self.update_bar_func()
 
             def epoch_end_out(epoch, logs):
                 self.logger.append(str(logs))
-                self.logger.moveCursor(QTextCursor.End)
+                # self.logger.moveCursor(QTextCursor.End)
 
             with self.graph.as_default():
                 self.model.fit(self.X_train, self.Y_train,
