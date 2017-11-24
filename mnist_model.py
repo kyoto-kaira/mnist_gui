@@ -96,15 +96,16 @@ class MnistModel(threading.Thread):
 
             def batch_end_out(epoch, logs):
                 # self.progress.setValue((epoch + 1) / num_batch * 100)
-                self.logger.append(str("{}/{} {:.4f}".format(epoch + 1,
-                                                             num_batch,
-                                                             logs['acc'])))
+                # self.logger.append(str("{}/{} {:.4f}".format(epoch + 1,
+                #                                              num_batch,
+                #                                              logs['acc'])))
                 # self.logger.moveCursor(QTextCursor.End)
                 if self.update_bar_func is not None:
                     self.update_bar_func()
 
             def epoch_end_out(epoch, logs):
-                self.logger.append(str(logs))
+                pass
+                # self.logger.append(str(logs))
                 # self.logger.moveCursor(QTextCursor.End)
 
             with self.graph.as_default():
@@ -115,6 +116,8 @@ class MnistModel(threading.Thread):
                                callbacks=[LambdaCallback(on_batch_end=batch_end_out,
                                                          on_epoch_end=epoch_end_out)])
 
+            self.logger.append("end learning")
+            self.logger.append(str(self.report_evaluation()))
             self._is_learning = False
             if self._exit:
                 break
