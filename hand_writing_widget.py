@@ -47,49 +47,35 @@ class ScribbleArea(QWidget):
         self.barOutput = bar_output
         self.model = model
 
-
-
     def getProcessedImage(self):
         self.resizeImage(self.image, self.size())
-        scaledImage = self.image.smoothScaled(28, 28)
-        height = scaledImage.height()
-        width = scaledImage.width()
-        blackset1 = []
-        blackset2 = []
-        imageArray = np.zeros((height, width))
-        for i in range(height):
-            for j in range(width):
-                imageArray[i][j] = 255 - scaledImage.pixelColor(j, i).lightness()
-                if imageArray[i][j] >= 254:
-                    blackset1.append(j)
-                    blackset2.append(i)
-        if (len(blackset1) is not 0) or (len(blackset2) is not 0):
-            T1 = (max(blackset1) + min(blackset1)) / 2
-            T2 = (max(blackset2) + min(blackset2)) / 2
+        scaled_image = self.image.smoothScaled(28, 28)
+        height = scaled_image.height()
+        width = scaled_image.width()
+        black_set_x = []
+        black_set_y = []
+        image_array = np.zeros((height, width))
+        for y in range(height):
+            for x in range(width):
+                image_array[y][x] = 255 - scaled_image.pixelColor(x, y).lightness()
+                if image_array[y][x] >= 254:
+                    black_set_y.append(y)
+                    black_set_x.append(x)
+        if (len(black_set_x) is not 0) or (len(black_set_y) is not 0):
+            mid_x = (max(black_set_x) + min(black_set_x)) // 2
+            mid_y = (max(black_set_y) + min(black_set_y)) // 2
         else:
-            T1 = 0
-            T2 = 0
-        for y in range(28):
-            for x in range(28):
-                imageArray[y][x] = 255 - scaledImage.pixelColor(x - (14 - T1), y - (14 - T2)).lightness()
-        if 14 - int(T1) >= 0:
-            for p in range(28):
-                for q in range(14 - int(T1)):
-                    imageArray[p][q] = 0  # 縦塗りつぶし
-        elif 14 - int(T1) < 0:
-            for a in range(28):
-                for b in range(28 - (int(T1) - 14), 28):
+            mid_x = 0
+            mid_y = 0
 
-                    imageArray[a][b] = 0  # 縦塗りつぶし
-        if 14 - int(T2) >= 0:
-            for u in range(14 - int(T2)):
-                for w in range(28):
-                    imageArray[u][w] = 0  # 横塗りつぶし
-        elif 14 - int(T2) < 0:
-            for c in range(28 - (int(T2) - 14), 28):
-                for d in range(28):
-                    imageArray[c][d] = 0  # 横塗りつぶし 
-        return imageArray.reshape((1, 28, 28, 1))
+        translated_image = np.zeros((height, width))
+        for y in range(height):
+            for x in range(width):
+                y_ = y - mid_y + height // 2
+                x_ = x - mid_x + width // 2
+                if 0 <= x_ < 28 and 0 <= y_ < 28:
+                    translated_image[y_][x_] = image_array[y][x]
+        return translated_image.reshape((1, 28, 28, 1))
 
     def outputAcc(self):
         image_array = self.getProcessedImage()
