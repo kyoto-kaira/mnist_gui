@@ -188,7 +188,7 @@ class HandWritingWidget(QWidget):
         self.barGraph.resize(200, 220)
 
         # 描画スペースのサイズに合わせて、ペンのサイズを自動設定
-        self.scribbleArea.setPenWidth(self.width() * 0.7 / 7)
+        self.scribbleArea.setPenWidth(self.width() * 0.08)
 
     def initUI(self, width, height):
         # QPixmapオブジェクト作成
