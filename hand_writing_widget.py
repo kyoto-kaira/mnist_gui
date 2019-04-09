@@ -22,11 +22,21 @@ class BarGraph(QWidget):
         painter.drawRect(dirty_rect)
         painter.setPen(Qt.black)
         painter.setBrush(QBrush(Qt.green))
-        y_step = 20
+        y_step = self.height() / 10.5
+        # フォントサイズ変更
+        font_size = int(y_step / 2)
+        font = painter.font()
+        font.setPointSize(font_size)
+        painter.setFont(font)
+        # 棒グラフと数値を描画
+        padding0 = self.width() / 20
+        bar_begin = padding0 + font_size * 2
+        bar_length = self.width()*0.98 - font_size*7 - bar_begin
+        padding1 = self.width() - font_size*7
         for i, v in enumerate(self.values):
-            painter.drawRect(15, y_step * i + 20, 100 * v, 5)
-            painter.drawText(5, y_step * i + 25, "{}".format(i))
-            painter.drawText(120, y_step * i + 25, "{:.4f}".format(v))
+            painter.drawText(padding0, y_step * i + y_step*1.25, "{}".format(i))
+            painter.drawRect(bar_begin, y_step * i + y_step*0.5, bar_length * v, y_step*0.8)
+            painter.drawText(padding1, y_step * i + y_step*1.25, "{:.4f}".format(v))
 
     def setValues(self, values):
         self.values = values
@@ -185,7 +195,7 @@ class HandWritingWidget(QWidget):
         self.scribbleArea.resize(self.width() * 0.575, self.width() * 0.575)
 
         self.barGraph.move(self.width() * 0.65, self.height() * 0.1)
-        self.barGraph.resize(200, 220)
+        self.barGraph.resize(self.width() * 0.3, self.height() * 0.4)
 
         # 描画スペースのサイズに合わせて、ペンのサイズを自動設定
         self.scribbleArea.setPenWidth(self.width() * 0.08)
