@@ -17,14 +17,19 @@ import sklearn.metrics
 from sklearn import datasets
 from sklearn.model_selection import train_test_split
 
+from PyQt5.QtCore import QObject, pyqtSignal
+
 default_model_path = './model.hdf5'
 
 
-class MnistModel(threading.Thread):
+class MnistModel(threading.Thread, QObject):
+    progress_signal = pyqtSignal(int)
+
     def __init__(self, logger, progress):
-        super(MnistModel, self).__init__()
+        threading.Thread.__init__(self)
+        QObject.__init__(self)
         self.logger = logger
-        self.progress = progress
+        self.progress_signal.connect(progress.setValue)
 
         self.learn_event = threading.Event()
         self.learn_event.clear()
@@ -75,6 +80,7 @@ class MnistModel(threading.Thread):
             self.model.save(path)
 
     def set_update_bar_func(self, update_bar_func):
+        """ユーザーが描いた手書き数字の認識をアップデートする"""
         self.update_bar_func = update_bar_func
 
     def run(self):
@@ -91,11 +97,11 @@ class MnistModel(threading.Thread):
                 self.logger.append("no model")
                 return
 
-            # self.progress.setValue(0)
+            self.progress_signal.emit(0)
             self.logger.append("start learning")
 
             def batch_end_out(epoch, logs):
-                # self.progress.setValue((epoch + 1) / num_batch * 100)
+                self.progress_signal.emit((epoch + 1) / num_batch * 100)
                 # self.logger.append(str("{}/{} {:.4f}".format(epoch + 1,
                 #                                              num_batch,
                 #                                              logs['acc'])))

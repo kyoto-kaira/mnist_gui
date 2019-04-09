@@ -62,7 +62,9 @@ border-radius:12px;
 #rankingWidget {
 background-color: #333333;
 }
-
+QProgressBar {
+    text-align: center;
+}
 """
 
 
@@ -113,7 +115,7 @@ class MainWindow(QMainWindow):
         self.stop_btn.move(self.width() * 0.01, self.height() * 0.35)
 
         self.progress_bar.move(self.width() * 0.01, self.height() * 0.9)
-        self.progress_bar.resize(self.width() * 0.5, self.height() * 0.05)
+        self.progress_bar.resize(self.width() * 0.18, self.height() * 0.05)
 
         self.textArea.move(self.width() * 0.01, self.height() * 0.4)
         self.textArea.resize(self.width() * 0.18, self.height() * 0.5)
